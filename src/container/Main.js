@@ -59,10 +59,6 @@ class Main extends React.Component {
         };
     }
 
-    callToServer = () => {
-        console.log('calling to server...');
-    };
-
     handleTabChange = (tabId) => {
         this.setState({
             activeTab: tabId,
@@ -90,58 +86,89 @@ class Main extends React.Component {
     handleStageMouseDown = (event) => {
         console.log('mouse down');
         const shape = event.target;
-        const elementsLayer = this.refs.elementsLayer;
-        // stop dragging original shape
+
         shape.stopDrag();
+        // clone it
         const clone = shape.clone({
-            x: shape.getAttr('x'),
-            y: shape.getAttr('y'),
+            x : shape.getAttr('x'),
+            y : shape.getAttr('y')
         });
         // events will also be cloned
         // so we need to disable dragstart
         clone.off('dragstart');
 
-        // add clone to original layer and start dragging new shape
+        const elementsLayer = this.refs.elementsLayer;
+        const mainLayer = this.refs.mainLayer;
+        // then add to layer and start dragging new shape
         elementsLayer.add(clone);
-        clone.startDrag(); // ????
+        clone.startDrag();
+        clone.on('dragstart', () => {
+            clone.moveTo(mainLayer);
+            if (this.tween) {
+                this.tween.pause();
+            }
+            clone.setAttrs({
+                shadowOffset: {
+                    x: 15,
+                    y: 15,
+                },
+                scale: {
+                    x: clone.getAttr('startScale') * 1.2,
+                    y: clone.getAttr('startScale') * 1.2,
+                }
+            });
+        });
+        clone.on('dragend', () => {
+            this.tween = new Konva.Tween({
+                node: clone,
+                duration: 0.5,
+                easing: Konva.Easings.ElasticEaseOut,
+                scaleX: clone.getAttr('startScale'),
+                scaleY: clone.getAttr('startScale'),
+                shadowOffsetX: 5,
+                shadowOffsetY: 5,
+            });
+            this.tween.play();
+        });
+        clone.on('dblclick', (event) => {
+            console.log('double click on ' + event.target.className);
+        });
     };
 
     handleStageDragStart = (event) => {
-        const shape = event.target;
-        console.log('dragging shape');
-        if (this.tween) {
-            this.tween.pause();
-        }
-        shape.setAttrs({
-            shadowOffset: {
-                x: 15,
-                y: 15,
-            },
-            scale: {
-                x: shape.getAttr('startScale') * 1.2,
-                y: shape.getAttr('startScale') * 1.2,
-            }
-        });
+        console.log('drag start');
+        // const shape = event.target;
+        // if (this.tween) {
+        //     this.tween.pause();
+        // }
+        // shape.setAttrs({
+        //     shadowOffset: {
+        //         x: 15,
+        //         y: 15,
+        //     },
+        //     scale: {
+        //         x: shape.getAttr('startScale') * 1.2,
+        //         y: shape.getAttr('startScale') * 1.2,
+        //     }
+        // });
+        // clone.moveTo(mainLayer);
 
-        const mainLayer = this.refs.mainLayer;
-        shape.moveTo(mainLayer);
     };
 
     handleStageDragEnded = (event) => {
-        const shape = event.target;
-        console.log('dragging ended');
-
-        this.tween = new Konva.Tween({
-            node: shape,
-            duration: 0.5,
-            easing: Konva.Easings.ElasticEaseOut,
-            scaleX: shape.getAttr('startScale'),
-            scaleY: shape.getAttr('startScale'),
-            shadowOffsetX: 5,
-            shadowOffsetY: 5,
-        });
-
-        this.tween.play();
+        console.log('drag ended');
+        // const shape = event.target;
+        // this.tween = new Konva.Tween({
+        //     node: shape,
+        //     duration: 0.5,
+        //     easing: Konva.Easings.ElasticEaseOut,
+        //     scaleX: shape.getAttr('startScale'),
+        //     scaleY: shape.getAttr('startScale'),
+        //     shadowOffsetX: 5,
+        //     shadowOffsetY: 5,
+        // });
+        //
+        // this.tween.play();
     };
 
     getActiveTab = () => {
