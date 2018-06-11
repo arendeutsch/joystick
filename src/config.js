@@ -4,6 +4,7 @@ const tabIds = {
     ALARMS: 3,
     SETTINGS: 4,
     JOYSTICK: 5,
+    BUILD: 6,
 };
 
 export {

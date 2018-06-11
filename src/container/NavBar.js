@@ -21,6 +21,8 @@ import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import PrinterIcon from '@material-ui/icons/Print';
 import Collapse from '@material-ui/core/Collapse';
+import BuildIcon from '@material-ui/icons/Build';
+import WindsIcon from '@material-ui/icons/CallMade';
 
 const drawerWidth = 240;
 
@@ -46,6 +48,7 @@ class NavBar extends React.Component {
     static propTypes = {
         classes: PropTypes.object.isRequired,
         onTabChange: PropTypes.func,
+        onShowWind: PropTypes.func,
     };
 
     constructor(props) {
@@ -58,6 +61,12 @@ class NavBar extends React.Component {
             activeTab: 0,
         };
     }
+
+    handleShowWind = () => {
+        if (this.props.onShowWind) {
+            this.props.onShowWind();
+        }
+    };
 
     handleListExpand = (expandList) => {
         switch (expandList) {
@@ -115,6 +124,18 @@ class NavBar extends React.Component {
                     </ListItem>
                     <Collapse in={this.state.expandSettingsList} timeout="auto" unmountOnExit>
                         <List component="div" disablePadding>
+                            <ListItem button className={classes.nested} onClick={this.handleTabChange.bind(this, tabIds.BUILD)}>
+                                <ListItemIcon>
+                                    <BuildIcon />
+                                </ListItemIcon>
+                                <ListItemText inset primary="Build vessel"/>
+                            </ListItem>
+                            <ListItem button className={classes.nested} onClick={this.handleShowWind}>
+                                <ListItemIcon>
+                                    <WindsIcon />
+                                </ListItemIcon>
+                                <ListItemText inset primary="show winds"/>
+                            </ListItem>
                             <ListItem button className={classes.nested}>
                                 <ListItemIcon>
                                     <PrinterIcon/>
