@@ -21,6 +21,7 @@ import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 
 import { withStyles } from '@material-ui/core/styles';
+import { colors } from "../config";
 
 const drawerWidth = 200;
 
@@ -47,12 +48,11 @@ const styles = theme => ({
         flexGrow: 1,
         backgroundColor: theme.palette.background.default,
         padding: theme.spacing.unit * 3,
-        minWidth: 0, // So the Typography noWrap works
     },
     toolbar: theme.mixins.toolbar,
     map: {
         width: '100%',
-        height: '100%',
+        height: '90%',
     },
     backButton: {
         marginRight: theme.spacing.unit,
@@ -60,6 +60,9 @@ const styles = theme => ({
     instructions: {
         marginTop: theme.spacing.unit,
         marginBottom: theme.spacing.unit,
+    },
+    stepperButton: {
+        backgroundColor:  colors.MAIN,
     },
 });
 
@@ -98,6 +101,24 @@ class Main extends React.Component {
         };
     }
 
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        console.log(this.state.activeStep);
+
+        if (this.state.activeStep === 2) {
+            const anchorLayer = this.refs.anchorLayer;
+            const elementsLayer = this.refs.elementsLayer;
+            if (anchorLayer !== null && elementsLayer !== null) {
+                anchorLayer.visible(false);
+                elementsLayer.visible(true);
+            }
+        } else if (this.state.activeStep ===1) {
+            const anchorLayer = this.refs.anchorLayer;
+            if (anchorLayer !== null) {
+                anchorLayer.visible(true);
+            }
+        }
+    }
+
     tween = null;
     bow = null;
     stern = null;
@@ -111,7 +132,7 @@ class Main extends React.Component {
 
     handleShowWind = () => {
         WindJSLeaflet.init({
-            localMode: true,
+            localMode: false,
             map: this.refs.leafletMap.leafletElement,
             layerControl: this.refs.leafletLayerControl.leafletElement,
             useNearest: false,
@@ -124,10 +145,9 @@ class Main extends React.Component {
             },
             overlayName: 'Winds',
 
-            // https://github.com/danwild/wind-js-server
-            pingUrl: 'https://localhost:7000/alive',
-            latestUrl: 'https://localhost:7000/latest',
-            nearestUrl: 'https://localhost:7000/nearest',
+            pingUrl: 'http://localhost:7000/alive',
+            latestUrl: 'http://localhost:7000/latest',
+            nearestUrl: 'http://localhost:7000/nearest',
             errorCallback: this.handleWindServerError
         });
     };
@@ -145,20 +165,20 @@ class Main extends React.Component {
                     end: this.buildAnchor(480, 80)
                 };
                 this.stern = {
-                    start: this.buildAnchor(40, 600),
-                    control1: this.buildAnchor(100, 670),
-                    control2: this.buildAnchor(350, 700),
-                    end: this.buildAnchor(480, 580)
+                    start: this.buildAnchor(140, 300),
+                    control1: this.buildAnchor(190, 270),
+                    control2: this.buildAnchor(350, 300),
+                    end: this.buildAnchor(480, 250)
                 };
                 this.port = {
                     start: this.buildAnchor(40, 100),
                     control: this.buildAnchor(20, 200),
-                    end: this.buildAnchor(80, 400)
+                    end: this.buildAnchor(80, 300)
                 };
                 this.sb = {
                     start: this.buildAnchor(600, 100),
                     control: this.buildAnchor(550, 200),
-                    end: this.buildAnchor(600, 400)
+                    end: this.buildAnchor(600, 300)
                 };
                 this.drawCurves();
                 this.updateDottedLines();
@@ -294,11 +314,6 @@ class Main extends React.Component {
 
     handleAnchorDrag = () => {
         const anchorLayer = this.refs.anchorLayer;
-        if (this.state.activeStep === 2) {
-            anchorLayer.visible(false);
-        } else {
-            anchorLayer.visible(true);
-        }
         anchorLayer.on('beforeDraw', () => {
             this.drawCurves();
             this.updateDottedLines();
@@ -308,6 +323,8 @@ class Main extends React.Component {
     renderBuildProcess = () => {
         switch (this.state.activeStep) {
             case 1:
+            case 2:
+            case 3:
                 return (
                     <Stage
                         width={window.innerWidth}
@@ -357,55 +374,97 @@ class Main extends React.Component {
                                 points={[0,0]}
                             />
                         </Layer>
-                    </Stage>
-                );
-            case 2:
-                return (
-                    <Stage
-                        width={window.innerWidth}
-                        height={window.innerHeight - 300}
-                        onDragStart={this.handleAnchorDrag}
-                    >
-                        <Layer ref="curveLayer">
-                        </Layer>
-                        <Layer ref="anchorLayer">
-                        </Layer>
-                        <Layer ref="lineLayer">
-                            <Line
-                                dash={[10, 10, 0, 10]}
-                                strokeWidth={3}
-                                stroke={'blue'}
-                                lineCap={'round'}
-                                id="bowLine"
-                                opacity={0.3}
-                                points={[0,0]}
+                        <Layer
+                            ref="elementsLayer"
+                            width={100}
+                            height={window.innerHeight - 300}
+                            x={650}
+                            y={0}
+                            visible={false}
+                        >
+                            <Text
+                                x={50}
+                                y={15}
+                                text="Elements:"
                             />
-                            <Line
-                                dash={[10, 10, 0, 10]}
-                                strokeWidth={3}
-                                stroke={'blue'}
-                                lineCap={'round'}
-                                id="sternLine"
-                                opacity={0.3}
-                                points={[0,0]}
+                            <Ring
+                                onMouseDown={this.handleStageMouseDown}
+                                onDragStart={this.handleStageDragStart}
+                                onDragEnd={this.handleStageDragEnded}
+                                x={90}
+                                y={125}
+                                innerRadius={40}
+                                outerRadius={55}
+                                stroke={'black'}
+                                strokeWidth={1.2}
+                                dash={[10, 5]}
+                                opacity={0.8}
+                                shadowOpacity={0.6}
+                                shadowColor={'black'}
+                                shadowBlur={10}
+                                shadowOffset={{
+                                    x: 5,
+                                    y: 5,
+                                }}
+                                scale={{
+                                    x: 1,
+                                    y: 1,
+                                }}
+                                startScale={1}
+                                draggable={true}
                             />
-                            <Line
-                                dash={[10, 10, 0, 10]}
-                                strokeWidth={3}
-                                stroke={'blue'}
-                                lineCap={'round'}
-                                id="portLine"
-                                opacity={0.3}
-                                points={[0,0]}
+                            <Rect
+                                onMouseDown={this.handleStageMouseDown}
+                                onDragStart={this.handleStageDragStart}
+                                onDragEnd={this.handleStageDragEnded}
+                                x={90}
+                                y={200}
+                                width={14}
+                                height={74}
+                                cornerRadius={3}
+                                stroke={'black'}
+                                strokeWidth={1.2}
+                                dash={[10, 5]}
+                                opacity={0.8}
+                                shadowOpacity={0.6}
+                                shadowColor={'black'}
+                                shadowBlur={10}
+                                shadowOffset={{
+                                    x: 5,
+                                    y: 5,
+                                }}
+                                scale={{
+                                    x: 1,
+                                    y: 1,
+                                }}
+                                startScale={1}
+                                draggable={true}
                             />
-                            <Line
-                                dash={[10, 10, 0, 10]}
-                                strokeWidth={3}
-                                stroke={'blue'}
-                                lineCap={'round'}
-                                id="sbLine"
-                                opacity={0.3}
-                                points={[0,0]}
+                            <RegularPolygon
+                                onMouseDown={this.handleStageMouseDown}
+                                onDragStart={this.handleStageDragStart}
+                                onDragEnd={this.handleStageDragEnded}
+                                x={90}
+                                y={300}
+                                sides={3}
+                                radius={6.5}
+                                fill={'black'}
+                                stroke={'black'}
+                                strokeWidth={1}
+                                opacity={0.8}
+                                shadowOpacity={0.6}
+                                shadowColor={'black'}
+                                shadowBlur={10}
+                                shadowOffset={{
+                                    x: 5,
+                                    y: 5,
+                                }}
+                                scale={{
+                                    x: 1,
+                                    y: 1,
+                                }}
+                                startScale={1}
+                                draggable={true}
                             />
                         </Layer>
                     </Stage>
@@ -458,23 +517,23 @@ class Main extends React.Component {
         clone.off('dragstart');
 
         const elementsLayer = this.refs.elementsLayer;
-        const mainLayer = this.refs.mainLayer;
+        const lineLayer = this.refs.lineLayer;
         // then add to layer and start dragging new shape
         elementsLayer.add(clone);
         clone.startDrag();
         clone.on('dragstart', () => {
-            clone.moveTo(mainLayer);
+            clone.moveTo(lineLayer);
             if (this.tween) {
                 this.tween.pause();
             }
             clone.setAttrs({
                 shadowOffset: {
-                    x: 15,
-                    y: 15,
+                    x: 10,
+                    y: 10,
                 },
                 scale: {
-                    x: clone.getAttr('startScale') * 1.2,
-                    y: clone.getAttr('startScale') * 1.2,
+                    x: clone.getAttr('startScale') * 1.1,
+                    y: clone.getAttr('startScale') * 1.1,
                 }
             });
         });
@@ -497,38 +556,10 @@ class Main extends React.Component {
 
     handleStageDragStart = (event) => {
         console.log('drag start');
-        // const shape = event.target;
-        // if (this.tween) {
-        //     this.tween.pause();
-        // }
-        // shape.setAttrs({
-        //     shadowOffset: {
-        //         x: 15,
-        //         y: 15,
-        //     },
-        //     scale: {
-        //         x: shape.getAttr('startScale') * 1.2,
-        //         y: shape.getAttr('startScale') * 1.2,
-        //     }
-        // });
-        // clone.moveTo(mainLayer);
-
     };
 
     handleStageDragEnded = (event) => {
         console.log('drag ended');
-        // const shape = event.target;
-        // this.tween = new Konva.Tween({
-        //     node: shape,
-        //     duration: 0.5,
-        //     easing: Konva.Easings.ElasticEaseOut,
-        //     scaleX: shape.getAttr('startScale'),
-        //     scaleY: shape.getAttr('startScale'),
-        //     shadowOffsetX: 5,
-        //     shadowOffsetY: 5,
-        // });
-        //
-        // this.tween.play();
     };
 
     getActiveTab = () => {
@@ -647,9 +678,14 @@ class Main extends React.Component {
                 const position = [67.296517, 15.164172];
                 const {BaseLayer, Overlay} = LayersControl;
                 return (
-                    <Map ref="leafletMap" className={classes.map} center={position} zoom={12}>
+                    <Map ref="leafletMap" className={classes.map} center={position} zoom={10}>
                         <LayersControl ref="leafletLayerControl" position="topright">
-                            <BaseLayer checked name="Day Light">
+                            <BaseLayer checked name="Satellite">
+                                <TileLayer
+                                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                                />
+                            </BaseLayer>
+                            <BaseLayer name="Day Light">
                                 <TileLayer
                                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                 />

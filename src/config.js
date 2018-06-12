@@ -1,3 +1,6 @@
+import red from '@material-ui/core/colors/red';
+import yellow from '@material-ui/core/colors/yellow';
+
 const tabIds = {
     HOME: 1,
     MAPS: 2,
@@ -7,6 +10,20 @@ const tabIds = {
     BUILD: 6,
 };
 
+const alarmType = {
+    1: 'ALM',
+    2: 'WRN',
+    3: 'ERR',
+};
+
+const colors = {
+    MAIN: '#5f9ea0',
+    ALARM: red[500],
+    WARNING: yellow[500],
+};
+
 export {
     tabIds,
+    alarmType,
+    colors,
 };

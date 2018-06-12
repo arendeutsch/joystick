@@ -31,12 +31,6 @@ const styles = theme => ({
         position: 'relative',
         width: drawerWidth,
     },
-    content: {
-        flexGrow: 1,
-        backgroundColor: theme.palette.background.default,
-        padding: theme.spacing.unit * 3,
-        minWidth: 0, // So the Typography noWrap works
-    },
     toolbar: theme.mixins.toolbar,
     nested: {
         paddingLeft: theme.spacing.unit * 4,

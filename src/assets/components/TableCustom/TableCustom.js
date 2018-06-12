@@ -12,9 +12,9 @@ import Checkbox from '@material-ui/core/Checkbox';
 import EnhancedTableToolbar from './components/EnhancedTableToolbar';
 import EnhancedTableHead from './components/EnhancedTableHead';
 
-let counter = 0;
+import { alarmType } from "../../../config";
+
 function createData(number, node, type, text, status, date) {
-    counter += 1;
     return { id: number, node, type, text, status, date };
 }
 
@@ -40,12 +40,12 @@ class EnhancedTable extends React.Component {
             orderBy: 'id',
             selected: [],
             data: [
-                createData(1, 'PLC1', 'WRN', 'Communication fault with PLC2', '+', '2018/09/06 15:13'),
-                createData(2, 'THR3', 'ALM', 'Oil level low ', '+/-', '2018/09/06 12:13'),
-                createData(3, 'THR2', 'WRN', 'Motor temp high', '+/-', '2018/09/06 12:13'),
-                createData(4, 'THR2', 'WRN', 'Motor temp high high', '+/ACK', '2018/09/06 12:13'),
-                createData(5, 'PLC2', 'WRN', 'Communication fault with PLC1', '+/ACK', '2018/09/06 15:13'),
-                createData(6, 'PLC1', 'ALM', 'Torque sensor defect' , '+/', '2018/09/06 15:13'),
+                createData(1, 'PLC1', alarmType["1"], 'Communication fault with PLC2', '+', '2018/09/06 15:13'),
+                createData(2, 'THR3', alarmType["1"], 'Oil level low ', '+/-', '2018/09/06 12:13'),
+                createData(3, 'THR2', alarmType["2"], 'Motor temp high', '+/-', '2018/09/06 12:13'),
+                createData(4, 'THR2', alarmType["2"], 'Motor temp high high', '+/ACK', '2018/09/06 12:13'),
+                createData(5, 'PLC2', alarmType["2"], 'Communication fault with PLC1', '+/ACK', '2018/09/06 15:13'),
+                createData(6, 'PLC1', alarmType["1"], 'Torque sensor defect' , '+/', '2018/09/06 15:13'),
             ].sort((a, b) => (a.number < b.number ? -1 : 1)),
             page: 0,
             rowsPerPage: 5,

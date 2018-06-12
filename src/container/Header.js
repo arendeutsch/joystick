@@ -7,6 +7,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 
 import logo from '../assets/img/anchor-avatar.png';
+import { colors } from "../config";
 
 const styles = theme => ({
     root: {
@@ -19,7 +20,7 @@ const styles = theme => ({
     },
     appBar: {
         zIndex: theme.zIndex.drawer + 1,
-        backgroundColor: '#5f9ea0',
+        backgroundColor: colors.MAIN,
     },
     bigAvatar: {
         width: 60,
