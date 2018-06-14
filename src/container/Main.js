@@ -9,7 +9,7 @@ import Boat from '../assets/components/Boat/Boat'
 import TableCustom from '../assets/components/TableCustom/TableCustom';
 
 import Konva from 'konva';
-import { Stage, Layer, Text, Ring, RegularPolygon, Rect, Line } from 'react-konva';
+import { Stage, Layer, Text, Ring, RegularPolygon, Rect, Line, Group } from 'react-konva';
 import { Map, TileLayer, Marker, Popup, LayersControl } from 'react-leaflet';
 
 import WindJSLeaflet from 'wind-js-leaflet';
@@ -93,6 +93,7 @@ class Main extends React.Component {
 
     constructor(props) {
         super(props);
+        this.azimuthRef = React.createRef();
 
         this.state = {
             activeTab: 0,
@@ -102,20 +103,25 @@ class Main extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        console.log(this.state.activeStep);
-
-        if (this.state.activeStep === 2) {
-            const anchorLayer = this.refs.anchorLayer;
-            const elementsLayer = this.refs.elementsLayer;
+        console.log('active step: ' + this.state.activeStep);
+        const anchorLayer = this.refs.anchorLayer;
+        const elementsLayer = this.refs.elementsLayer;
+        const lineLayer = this.refs.lineLayer;
+        if (this.state.activeStep ===1) {
+            if (anchorLayer !== null) {
+                anchorLayer.visible(true);
+                elementsLayer.visible(false);
+            }
+        } else if (this.state.activeStep === 2) {
             if (anchorLayer !== null && elementsLayer !== null) {
                 anchorLayer.visible(false);
                 elementsLayer.visible(true);
             }
-        } else if (this.state.activeStep ===1) {
-            const anchorLayer = this.refs.anchorLayer;
-            if (anchorLayer !== null) {
-                anchorLayer.visible(true);
-            }
+        } else if (this.state.activeStep === 3) {
+            lineLayer.visible(true);
+            elementsLayer.visible(false);
+            // children 0-3 are the line that draw the vessel. the rest are added thrusters
+            console.log(lineLayer.children);
         }
     }
 
@@ -126,7 +132,7 @@ class Main extends React.Component {
     sb = null;
 
     handleWindServerError = (err) => {
-        console.log('handleError...');
+        console.log('handle wind server error...');
         console.log(err);
     };
 
@@ -143,7 +149,7 @@ class Main extends React.Component {
                 displayPosition: 'bottomleft',
                 displayEmptyString: 'No wind data'
             },
-            overlayName: 'Winds',
+            overlayName: 'Wind forecast',
 
             pingUrl: 'http://localhost:7000/alive',
             latestUrl: 'http://localhost:7000/latest',
@@ -336,7 +342,10 @@ class Main extends React.Component {
                                onDragStart={this.handleAnchorDrag}
                         >
                         </Layer>
-                        <Layer ref="lineLayer">
+                        <Layer
+                            ref="lineLayer"
+                            onClick={this.handleMainLayerClick}
+                        >
                             <Line
                                 dash={[10, 10, 0, 10]}
                                 strokeWidth={3}
@@ -380,24 +389,23 @@ class Main extends React.Component {
                             height={window.innerHeight - 300}
                             x={650}
                             y={0}
-                            visible={false}
+                            // visible={false}
                         >
                             <Text
                                 x={50}
                                 y={15}
-                                text="Elements:"
+                                text="THRUSTERS:"
+                                fontSize={20}
                             />
-                            <Ring
+                            <Group
+                                ref="azimuth"
                                 onMouseDown={this.handleStageMouseDown}
                                 onDragStart={this.handleStageDragStart}
                                 onDragEnd={this.handleStageDragEnded}
-                                x={90}
-                                y={125}
-                                innerRadius={40}
-                                outerRadius={55}
-                                stroke={'black'}
-                                strokeWidth={1.2}
-                                dash={[10, 5]}
+                                draggable={true}
+                                rotation={0}
+                                x={110}
+                                y={100}
                                 opacity={0.8}
                                 shadowOpacity={0.6}
                                 shadowColor={'black'}
@@ -411,67 +419,104 @@ class Main extends React.Component {
                                     y: 1,
                                 }}
                                 startScale={1}
-                                draggable={true}
-                            />
+                            >
+                                <Ring
+                                    innerRadius={40}
+                                    outerRadius={55}
+                                    stroke={'black'}
+                                    strokeWidth={1.2}
+                                    opacity={0.8}
+                                    shadowOpacity={0.6}
+                                    shadowColor={'black'}
+                                    shadowBlur={10}
+                                    shadowOffset={{
+                                        x: 5,
+                                        y: 5,
+                                    }}
+                                    scale={{
+                                        x: 1,
+                                        y: 1,
+                                    }}
+                                    startScale={1}
+                                    dash={[10, 5]}
+                                />
+                                <Rect
+                                    x={-7}
+                                    y={-37}
+                                    width={14}
+                                    height={74}
+                                    cornerRadius={3}
+                                    stroke={'black'}
+                                    strokeWidth={1.2}
+                                    opacity={0.8}
+                                    shadowOpacity={0.6}
+                                    shadowColor={'black'}
+                                    shadowBlur={10}
+                                    shadowOffset={{
+                                        x: 5,
+                                        y: 5,
+                                    }}
+                                    scale={{
+                                        x: 1,
+                                        y: 1,
+                                    }}
+                                    startScale={1}
+                                    dash={[10, 5]}
+                                />
+                                <RegularPolygon
+                                    x={0}
+                                    y={-45}
+                                    sides={3}
+                                    radius={6.5}
+                                    stroke={'black'}
+                                    strokeWidth={1}
+                                    opacity={0.8}
+                                    shadowOpacity={0.6}
+                                    shadowColor={'black'}
+                                    shadowBlur={10}
+                                    shadowOffset={{
+                                        x: 5,
+                                        y: 5,
+                                    }}
+                                    scale={{
+                                        x: 1,
+                                        y: 1,
+                                    }}
+                                    startScale={1}
+                                    dash={[10, 5]}
+                                />
+                            </Group>
                             <Rect
                                 onMouseDown={this.handleStageMouseDown}
-                                onDragStart={this.handleStageDragStart}
-                                onDragEnd={this.handleStageDragEnded}
-                                x={90}
-                                y={200}
+                                draggable={true}
+                                x={150}
+                                y={180}
+                                rotation={90}
                                 width={14}
-                                height={74}
+                                height={85}
                                 cornerRadius={3}
                                 stroke={'black'}
                                 strokeWidth={1.2}
+                                opacity={0.8}
+                                shadowOpacity={0.6}
+                                shadowColor={'black'}
+                                shadowBlur={10}
+                                shadowOffset={{
+                                    x: 5,
+                                    y: 5,
+                                }}
+                                scale={{
+                                    x: 1,
+                                    y: 1,
+                                }}
+                                startScale={1}
                                 dash={[10, 5]}
-                                opacity={0.8}
-                                shadowOpacity={0.6}
-                                shadowColor={'black'}
-                                shadowBlur={10}
-                                shadowOffset={{
-                                    x: 5,
-                                    y: 5,
-                                }}
-                                scale={{
-                                    x: 1,
-                                    y: 1,
-                                }}
-                                startScale={1}
-                                draggable={true}
-                            />
-                            <RegularPolygon
-                                onMouseDown={this.handleStageMouseDown}
-                                onDragStart={this.handleStageDragStart}
-                                onDragEnd={this.handleStageDragEnded}
-                                x={90}
-                                y={300}
-                                sides={3}
-                                radius={6.5}
-                                fill={'black'}
-                                stroke={'black'}
-                                strokeWidth={1}
-                                opacity={0.8}
-                                shadowOpacity={0.6}
-                                shadowColor={'black'}
-                                shadowBlur={10}
-                                shadowOffset={{
-                                    x: 5,
-                                    y: 5,
-                                }}
-                                scale={{
-                                    x: 1,
-                                    y: 1,
-                                }}
-                                startScale={1}
-                                draggable={true}
                             />
                         </Layer>
                     </Stage>
                 );
         }
     };
-
 
     handleTabChange = (tabId) => {
         this.setState({
@@ -503,33 +548,39 @@ class Main extends React.Component {
     };
 
     handleStageMouseDown = (event) => {
-        console.log('mouse down');
-        const shape = event.target;
+        let shape = null;
+        if (event.target.className === 'Rect'){
+            shape = event.target;
+        } else {
+            shape = this.refs.azimuth;
+        }
+        // const azimuth = this.azimuthRef.current;
 
         shape.stopDrag();
-        // clone it
         const clone = shape.clone({
             x : shape.getAttr('x'),
-            y : shape.getAttr('y')
+            y : shape.getAttr('y'),
         });
-        // events will also be cloned
-        // so we need to disable dragstart
+        // events will also be cloned so we need to disable dragstart
         clone.off('dragstart');
 
         const elementsLayer = this.refs.elementsLayer;
         const lineLayer = this.refs.lineLayer;
+
         // then add to layer and start dragging new shape
         elementsLayer.add(clone);
         clone.startDrag();
+
         clone.on('dragstart', () => {
+            console.log('dragstart');
             clone.moveTo(lineLayer);
             if (this.tween) {
                 this.tween.pause();
             }
             clone.setAttrs({
                 shadowOffset: {
-                    x: 10,
-                    y: 10,
+                    x: 8,
+                    y: 8,
                 },
                 scale: {
                     x: clone.getAttr('startScale') * 1.1,
@@ -548,18 +599,28 @@ class Main extends React.Component {
                 shadowOffsetY: 5,
             });
             this.tween.play();
+            // removing dash stroke from clone
+            if (clone.nodeType === 'Group') {
+                for (let i= 0; i < clone.children.length; i++) {
+                    clone.children[i].dash([0,0]);
+                }
+            } else {
+                clone.dash([0,0]);
+            }
         });
-        clone.on('dblclick', (event) => {
-            console.log('double click on ' + event.target.className);
+        clone.on('dblclick', () => {
+            const transformer = new Konva.Transformer();
+            lineLayer.add(transformer);
+            transformer.attachTo(clone);
+            lineLayer.draw();
         });
     };
 
-    handleStageDragStart = (event) => {
-        console.log('drag start');
-    };
-
-    handleStageDragEnded = (event) => {
-        console.log('drag ended');
+    handleMainLayerClick = (event) => {
+        // if click on empty area - remove all transformers
+        const lineLayer = this.refs.lineLayer;
+        lineLayer.find('Transformer').destroy();
+        lineLayer.draw();
     };
 
     getActiveTab = () => {
@@ -575,101 +636,12 @@ class Main extends React.Component {
                         height={900}
                     >
                         <Layer
-                            ref="elementsLayer"
-                            width={200}
-                            height={900}
-                            x={500}
-                            y={0}
-                        >
-                            <Text
-                                x={50}
-                                y={15}
-                                text="Elements:"
-                            />
-                            <Ring
-                                onMouseDown={this.handleStageMouseDown}
-                                onDragStart={this.handleStageDragStart}
-                                onDragEnd={this.handleStageDragEnded}
-                                x={90}
-                                y={125}
-                                innerRadius={40}
-                                outerRadius={55}
-                                stroke={'black'}
-                                strokeWidth={1.2}
-                                dash={[10, 5]}
-                                opacity={0.8}
-                                shadowOpacity={0.6}
-                                shadowColor={'black'}
-                                shadowBlur={10}
-                                shadowOffset={{
-                                    x: 5,
-                                    y: 5,
-                                }}
-                                scale={{
-                                    x: 1,
-                                    y: 1,
-                                }}
-                                startScale={1}
-                                draggable={true}
-                            />
-                            <Rect
-                                onMouseDown={this.handleStageMouseDown}
-                                onDragStart={this.handleStageDragStart}
-                                onDragEnd={this.handleStageDragEnded}
-                                x={90}
-                                y={200}
-                                width={14}
-                                height={74}
-                                cornerRadius={3}
-                                stroke={'black'}
-                                strokeWidth={1.2}
-                                dash={[10, 5]}
-                                opacity={0.8}
-                                shadowOpacity={0.6}
-                                shadowColor={'black'}
-                                shadowBlur={10}
-                                shadowOffset={{
-                                    x: 5,
-                                    y: 5,
-                                }}
-                                scale={{
-                                    x: 1,
-                                    y: 1,
-                                }}
-                                startScale={1}
-                                draggable={true}
-                            />
-                            <RegularPolygon
-                                onMouseDown={this.handleStageMouseDown}
-                                onDragStart={this.handleStageDragStart}
-                                onDragEnd={this.handleStageDragEnded}
-                                x={90}
-                                y={300}
-                                sides={3}
-                                radius={6.5}
-                                fill={'black'}
-                                stroke={'black'}
-                                strokeWidth={1}
-                                opacity={0.8}
-                                shadowOpacity={0.6}
-                                shadowColor={'black'}
-                                shadowBlur={10}
-                                shadowOffset={{
-                                    x: 5,
-                                    y: 5,
-                                }}
-                                scale={{
-                                    x: 1,
-                                    y: 1,
-                                }}
-                                startScale={1}
-                                draggable={true}
-                            />
-                         </Layer>
-                        <Layer
                             ref="mainLayer"
                         >
-                            <Boat/>
+                            <Boat
+                                ref="mainVessel"
+                                onVesselClick={this.handleMainLayerClick}
+                            />
                         </Layer>
                     </Stage>
                 );

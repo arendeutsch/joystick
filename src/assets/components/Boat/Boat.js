@@ -1,7 +1,12 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Line } from 'react-konva';
 
 class Boat extends React.Component {
+
+    static propTypes = {
+        onVesselClick: PropTypes.func,
+    };
 
     state = {
         // points: [200, 10, 100, 100, 100, 380, 300, 380, 300, 100],
@@ -15,6 +20,12 @@ class Boat extends React.Component {
         stroke: '#000'
     };
 
+    handleOnClick = () => {
+        if (this.props.onVesselClick) {
+            this.props.onVesselClick();
+        }
+    };
+
     render () {
         return (
             <Line
@@ -24,6 +35,7 @@ class Boat extends React.Component {
                 strokeWidth={5}
                 closed={true}
                 tension={0.17}
+                onClick={this.props.handleOnClick}
             />
         );
     }

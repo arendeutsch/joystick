@@ -5,6 +5,7 @@ import { Ring, Rect, Group, RegularPolygon } from 'react-konva';
 
 class Azimuth extends React.Component {
     static propTypes = {
+        setRef: PropTypes.object,
         number: PropTypes.number,
         thrust: PropTypes.number,
         position: PropTypes.object,
@@ -15,7 +16,6 @@ class Azimuth extends React.Component {
         draggable: PropTypes.bool,
         showThrusterOptions: PropTypes.func,
         onDrag: PropTypes.func,
-        scale: PropTypes.number,
         opacity: PropTypes.number,
         shadowOpacity: PropTypes.number,
         shadowColor: PropTypes.string,
@@ -23,6 +23,9 @@ class Azimuth extends React.Component {
         shadowOffset: PropTypes.object,
         scale: PropTypes.object,
         scaleStart: PropTypes.number,
+        onHandleMouseDown: PropTypes.func,
+        onHandleDragStart: PropTypes.func,
+        onHandleDragEnd: PropTypes.func,
 
 
     };
@@ -35,17 +38,17 @@ class Azimuth extends React.Component {
         strokeColor: 'black',
         strokeWidth: 1.2,
         onDrag: null,
-
+        onMouseDown: null,
+        onDragStart: null,
+        onDragEnd: null,
         angle: 0,
         draggable: false,
         showThrusterOptions: null,
-
     };
 
     state = {
         angle: this.props.angle,
         thrust: this.props.thrust,
-        draggable: this.props.draggable,
         strokeColor: this.props.strokeColor,
         strokeWidth: this.props.strokeWidth,
         thrusterOptions: null,
@@ -61,14 +64,32 @@ class Azimuth extends React.Component {
         }
     };
 
+    handleMouseDown = () => {
+        if (this.props.onHandleMouseDown) {
+            this.props.onHandleMouseDown();
+        }
+    };
+
+    handleDragStart = () => {
+        if (this.props.onHandleDragStart) {
+            this.props.onHandleDragStart();
+        }
+    };
+
+    handleDragEnd = () => {
+        if (this.props.onHandleDragEnd) {
+            this.props.onHandleDragEnd();
+        }
+    };
+
     render () {
         return (
             <Group
-                draggable={this.state.draggable}
+                ref={this.props.setRef}
+                draggable={this.props.draggable}
                 rotation={this.state.angle}
                 x={this.props.position.x}
                 y={this.props.position.y}
-                onClick={this.handleOnClick}
                 opacity={this.props.opacity}
                 shadowOpacity={this.props.shadowOpacity}
                 shadowColor={this.props.shadowColor}
@@ -76,6 +97,10 @@ class Azimuth extends React.Component {
                 shadowOffset={this.props.shadowOffset}
                 scale={this.props.scale}
                 startScale={this.props.scaleStart}
+                onClick={this.handleOnClick}
+                onMouseDown={this.handleMouseDown}
+                onDragStart={this.handleDragStart}
+                onDragEnd={this.handleDragEnd}
             >
                 <Ring
                     innerRadius={40}
@@ -83,6 +108,13 @@ class Azimuth extends React.Component {
                     fill={this.props.background}
                     stroke={this.state.strokeColor}
                     strokeWidth={this.state.strokeWidth}
+                    opacity={this.props.opacity}
+                    shadowOpacity={this.props.shadowOpacity}
+                    shadowColor={this.props.shadowColor}
+                    shadowBlur={this.props.shadowBlur}
+                    shadowOffset={this.props.shadowOffset}
+                    scale={this.props.scale}
+                    startScale={this.props.scaleStart}
                 />
                 <Rect
                     x={-7}
@@ -97,6 +129,13 @@ class Azimuth extends React.Component {
                     cornerRadius={3}
                     stroke={'black'}
                     strokeWidth={1.2}
+                    opacity={this.props.opacity}
+                    shadowOpacity={this.props.shadowOpacity}
+                    shadowColor={this.props.shadowColor}
+                    shadowBlur={this.props.shadowBlur}
+                    shadowOffset={this.props.shadowOffset}
+                    scale={this.props.scale}
+                    startScale={this.props.scaleStart}
                 />
                 <RegularPolygon
                     x={0}
@@ -106,6 +145,13 @@ class Azimuth extends React.Component {
                     fill={'black'}
                     stroke={'black'}
                     strokeWidth={1}
+                    opacity={this.props.opacity}
+                    shadowOpacity={this.props.shadowOpacity}
+                    shadowColor={this.props.shadowColor}
+                    shadowBlur={this.props.shadowBlur}
+                    shadowOffset={this.props.shadowOffset}
+                    scale={this.props.scale}
+                    startScale={this.props.scaleStart}
                 />
             </Group>
         );
