@@ -66,7 +66,7 @@ const styles = theme => ({
         marginBottom: theme.spacing.unit,
     },
     stepperButton: {
-        backgroundColor:  colors.MAIN,
+        backgroundColor: colors.MAIN,
     },
 });
 
@@ -81,7 +81,7 @@ function getStepContent(stepIndex) {
         case 1:
             return 'Drag the anchor points to draw the vessel. Press the Next button when finished';
         case 2:
-            return 'Add thrusters to the vessel. Double click on each in order to scale or rotate. Press the Next button when finished';
+            return 'Add thrusters to the vessel. Double click on each in order to scale or rotate, right click to configure them.  Press the Next button when finished';
         case 3:
             return 'All Done ? Press the Finish button';
         default:
@@ -97,7 +97,6 @@ class Main extends React.Component {
 
     constructor(props) {
         super(props);
-        this.azimuthRef = React.createRef();
         this.layerControlRef = React.createRef();
 
         this.state = {
@@ -106,10 +105,12 @@ class Main extends React.Component {
             activeStep: 0,
             showThrusterDialog: null,
             messageDialog: null,
+            vessel: [],
         };
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
+        console.log('active build step: ' + this.state.activeStep);
         if (this.state.activeTab === tabIds.BUILD) {
             const anchorLayer = this.refs.anchorLayer;
             const elementsLayer = this.refs.elementsLayer;
@@ -123,7 +124,9 @@ class Main extends React.Component {
                 if (anchorLayer !== null && elementsLayer !== null) {
                     anchorLayer.visible(false);
                     elementsLayer.visible(true);
+                    this.saveVesselPoints(anchorLayer.children);
                 }
+
             } else if (this.state.activeStep === 3) {
                 lineLayer.visible(true);
                 elementsLayer.visible(false);
@@ -145,6 +148,14 @@ class Main extends React.Component {
     port = null;
     sb = null;
 
+    saveVesselPoints = (points) => {
+        let array = [];
+        points.forEach((point) => {
+            array.push(point.getAttr('x'), point.getAttr('y'));
+        });
+        console.log(array);
+    };
+
     handleWindServerError = (err) => {
         console.log('handle wind server error...');
         console.log(err);
@@ -163,7 +174,12 @@ class Main extends React.Component {
         });
     };
 
-    handleCloseThrusterDialog = () => {
+    handleCloseThrusterDialog = (node, type, number, position) => {
+        console.log('type: ' + type);
+        console.log('number: ' + number);
+        console.log(position);
+        console.log(node);
+
         this.setState({
             showThrusterDialog: null,
         });
@@ -227,22 +243,23 @@ class Main extends React.Component {
                     control2: this.buildAnchor(350, 20),
                     end: this.buildAnchor(480, 80)
                 };
-                this.stern = {
-                    start: this.buildAnchor(140, 300),
-                    control1: this.buildAnchor(190, 270),
-                    control2: this.buildAnchor(350, 300),
-                    end: this.buildAnchor(480, 250)
-                };
-                this.port = {
-                    start: this.buildAnchor(40, 100),
-                    control: this.buildAnchor(20, 200),
-                    end: this.buildAnchor(80, 300)
-                };
                 this.sb = {
                     start: this.buildAnchor(600, 100),
                     control: this.buildAnchor(550, 200),
                     end: this.buildAnchor(600, 300)
                 };
+                this.stern = {
+                    end: this.buildAnchor(480, 250),
+                    control2: this.buildAnchor(350, 300),
+                    control1: this.buildAnchor(190, 270),
+                    start: this.buildAnchor(140, 300)
+                };
+                this.port = {
+                    end: this.buildAnchor(80, 300),
+                    control: this.buildAnchor(20, 200),
+                    start: this.buildAnchor(40, 100)
+                };
+
                 this.drawCurves();
                 this.updateDottedLines();
             }
@@ -321,16 +338,24 @@ class Main extends React.Component {
             context.setAttr('lineWidth', 4);
             context.stroke();
 
+            // draw startboard
+            context.beginPath();
+            context.moveTo(this.sb.start.attrs.x, this.sb.start.attrs.y);
+            context.quadraticCurveTo(this.sb.control.attrs.x, this.sb.control.attrs.y, this.sb.end.attrs.x, this.sb.end.attrs.y);
+            context.setAttr('strokeStyle', 'green');
+            context.setAttr('lineWidth', 4);
+            context.stroke();
+
             // draw stern
             context.beginPath();
-            context.moveTo(this.stern.start.attrs.x, this.stern.start.attrs.y);
+            context.moveTo(this.stern.end.attrs.x, this.stern.end.attrs.y);
             context.bezierCurveTo(
-                this.stern.control1.attrs.x,
-                this.stern.control1.attrs.y,
                 this.stern.control2.attrs.x,
                 this.stern.control2.attrs.y,
-                this.stern.end.attrs.x,
-                this.stern.end.attrs.y
+                this.stern.control1.attrs.x,
+                this.stern.control1.attrs.y,
+                this.stern.start.attrs.x,
+                this.stern.start.attrs.y
             );
             context.setAttr('strokeStyle', 'black');
             context.setAttr('lineWidth', 4);
@@ -338,19 +363,12 @@ class Main extends React.Component {
 
             // draw port
             context.beginPath();
-            context.moveTo(this.port.start.attrs.x, this.port.start.attrs.y);
-            context.quadraticCurveTo(this.port.control.attrs.x, this.port.control.attrs.y, this.port.end.attrs.x, this.port.end.attrs.y);
-            context.setAttr('strokeStyle', 'black');
+            context.moveTo(this.port.end.attrs.x, this.port.end.attrs.y);
+            context.quadraticCurveTo(this.port.control.attrs.x, this.port.control.attrs.y, this.port.start.attrs.x, this.port.start.attrs.y);
+            context.setAttr('strokeStyle', 'red');
             context.setAttr('lineWidth', 4);
             context.stroke();
 
-            // draw startboard
-            context.beginPath();
-            context.moveTo(this.sb.start.attrs.x, this.sb.start.attrs.y);
-            context.quadraticCurveTo(this.sb.control.attrs.x, this.sb.control.attrs.y, this.sb.end.attrs.x, this.sb.end.attrs.y);
-            context.setAttr('strokeStyle', 'black');
-            context.setAttr('lineWidth', 4);
-            context.stroke();
         }
     };
 
@@ -367,9 +385,9 @@ class Main extends React.Component {
             const sbLine = lineLayer.get('#sbLine')[0];
 
             bowLine.setPoints([b.start.attrs.x, b.start.attrs.y, b.control1.attrs.x, b.control1.attrs.y, b.control2.attrs.x, b.control2.attrs.y, b.end.attrs.x, b.end.attrs.y]);
-            sternLine.setPoints([a.start.attrs.x, a.start.attrs.y, a.control1.attrs.x, a.control1.attrs.y, a.control2.attrs.x, a.control2.attrs.y, a.end.attrs.x, a.end.attrs.y]);
-            portLine.setPoints([p.start.attrs.x, p.start.attrs.y, p.control.attrs.x, p.control.attrs.y, p.end.attrs.x, p.end.attrs.y]);
             sbLine.setPoints([sb.start.attrs.x, sb.start.attrs.y, sb.control.attrs.x, sb.control.attrs.y, sb.end.attrs.x, sb.end.attrs.y]);
+            sternLine.setPoints([a.end.attrs.x, a.end.attrs.y, a.control2.attrs.x, a.control2.attrs.y, a.control1.attrs.x, a.control1.attrs.y, a.start.attrs.x, a.start.attrs.y]);
+            portLine.setPoints([p.end.attrs.x, p.end.attrs.y, p.control.attrs.x, p.control.attrs.y, p.start.attrs.x, p.start.attrs.y]);
 
             lineLayer.draw();
         }
@@ -391,7 +409,7 @@ class Main extends React.Component {
                 return (
                     <Stage
                         width={window.innerWidth}
-                        height={window.innerHeight - 300}
+                        height={window.innerHeight - 250}
                     >
                         <Layer ref="curveLayer">
                         </Layer>
@@ -443,7 +461,7 @@ class Main extends React.Component {
                         <Layer
                             ref="elementsLayer"
                             width={100}
-                            height={window.innerHeight - 300}
+                            height={window.innerHeight - 250}
                             x={650}
                             y={0}
                             // visible={false}

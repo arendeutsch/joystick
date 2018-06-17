@@ -18,15 +18,15 @@ const alarmType = {
 };
 
 const colors = {
-    MAIN: '#5f9ea0',
+    MAIN: '#1a6da0',
     ALARM: red[500],
     WARNING: yellow[500],
 };
 
 const theme = createMuiTheme({
     palette: {
-        primary: { main: '#5f9ea0' },
-        secondary: { main: red[500] },
+        primary: { main: '#537178' },
+        secondary: { main: red[600] },
     },
 });
 

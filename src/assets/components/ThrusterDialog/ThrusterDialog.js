@@ -11,7 +11,6 @@ import Input from '@material-ui/core/Input';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
-import TextField from '@material-ui/core/TextField';
 import Grid from '@material-ui/core/Grid';
 
 const styles = theme => ({
@@ -25,6 +24,10 @@ const styles = theme => ({
     },
     button: {
         width: '100%',
+    },
+    item: {
+        paddingBottom: 0,
+        paddingTop: 0,
     },
 });
 
@@ -40,39 +43,120 @@ class ThrusterDialog extends React.Component {
     state = {
         thrusterNode: null,
         type: 0,
-        number: 0,
-        position: {x: 0, y: 0},
+        thrusterNumber: 0,
+        position: {x: '', y: ''},
         onClose: null,
         onConfirm: null,
         onDelete: null,
+        numberError: true,
+        positionXError: true,
+        positionYError: true,
+        typeError: true,
+        disableConfirm: true,
     };
 
+    regEx = new RegExp('^[0-9]+([,.][0-9]+)?$');
+
     handleChangeType = (event) => {
-        this.setState({
-            type: event.target.value,
-        });
+        const type = event.target.value;
+        if (type > 0) {
+            this.setState({
+                type: type,
+                typeError : false,
+            }, () => {
+                if (!this.state.numberError && !this.state.positionXError && !this.state.positionYError && this.state.thrusterNumber > 0 && !this.state.typeError) {
+                    this.setState({
+                        disableConfirm: false,
+                    });
+                } else {
+                    this.setState({
+                        disableConfirm: true,
+                    });
+                }
+            });
+        } else {
+            this.setState({
+                typeError : true,
+            }, () => {
+                if (!this.state.numberError && !this.state.positionXError && !this.state.positionYError && this.state.thrusterNumber > 0 && !this.state.typeError) {
+                    this.setState({
+                        disableConfirm: false,
+                    });
+                } else {
+                    this.setState({
+                        disableConfirm: true,
+                    });
+                }
+            });
+        }
     };
 
     handleChangeNumber = (event) => {
         let number = event.target.value;
         if (number < 0) {
             number = 0;
+            this.setState({
+                thrusterNumber: number,
+                numberError: true,
+            });
+        } else {
+            this.setState({
+                thrusterNumber: number,
+                numberError: false,
+            }, () => {
+                if (!this.state.numberError && !this.state.positionXError && !this.state.positionYError && this.state.thrusterNumber > 0 && !this.state.typeError) {
+                    this.setState({
+                        disableConfirm: false,
+                    });
+                } else {
+                    this.setState({
+                        disableConfirm: true,
+                    });
+                }
+            });
         }
-        this.setState({
-            number: number,
-        });
     };
 
     handleChangeXPosition = (event) => {
+        const x = event.target.value;
         this.setState({
-            position: { x: event.target.value},
-        })
+            position: {
+                x: x,
+                y: this.state.position.y,
+            },
+            positionXError: !this.regEx.test(x),
+        }, ()=> {
+            if (!this.state.numberError && !this.state.positionXError && !this.state.positionYError && this.state.thrusterNumber > 0 && !this.state.typeError) {
+                this.setState({
+                    disableConfirm: false,
+                });
+            } else {
+                this.setState({
+                    disableConfirm: true,
+                });
+            }
+        });
     };
 
     handleChangeYPosition = (event) => {
+        const y = event.target.value;
         this.setState({
-            position: { y: event.target.value},
-        })
+            position: {
+                x: this.state.position.x,
+                y: y,
+            },
+            positionYError: !this.regEx.test(y),
+        }, () => {
+            if (!this.state.numberError && !this.state.positionXError && !this.state.positionYError && this.state.thrusterNumber > 0 && !this.state.typeError) {
+                this.setState({
+                    disableConfirm: false,
+                });
+            } else {
+                this.setState({
+                    disableConfirm: true,
+                });
+            }
+        });
     };
 
     handleClose = () => {
@@ -83,7 +167,10 @@ class ThrusterDialog extends React.Component {
 
     handleConfirm = () => {
         if (this.props.onConfirm) {
-            this.props.onConfirm();
+            this.props.onConfirm(this.props.thrusterNode,
+                this.state.type,
+                this.state.number,
+                this.state.position);
         }
     };
 
@@ -104,62 +191,79 @@ class ThrusterDialog extends React.Component {
             >
                 <DialogTitle>Thruster Configuration</DialogTitle>
                 <DialogContent>
-                    <FormControl className={classes.formControl}>
-                        <TextField
-                            label="Number"
-                            value={this.state.number}
+                    <FormControl className={classes.formControl} error={this.state.numberError} required={true}>
+                        <InputLabel htmlFor="number">Number</InputLabel>
+                        <Input
+                            id="number"
+                            value={this.state.thrusterNumber}
                             onChange={this.handleChangeNumber}
                             type="number"
                             />
                     </FormControl>
-                    <FormControl className={classes.formControl}>
+                    <FormControl className={classes.formControl} error={this.state.typeError} required={true}>
                         <InputLabel htmlFor="thruster-type">Type</InputLabel>
                         <Select
                             value={this.state.type}
                             onChange={this.handleChangeType}
                             input={<Input id="thruster-type" />}
                         >
-                            <MenuItem value={0}><em>None</em></MenuItem>
-                            <MenuItem value={1}>Tunnel</MenuItem>
-                            <MenuItem value={2}>Azimuth</MenuItem>
-                            <MenuItem value={3}>Rudder</MenuItem>
+                            <MenuItem className={classes.item} value={0}><em>None</em></MenuItem>
+                            <MenuItem className={classes.item} value={1}>Tunnel</MenuItem>
+                            <MenuItem className={classes.item} value={2}>Azimuth</MenuItem>
+                            <MenuItem className={classes.item} value={3}>Rudder</MenuItem>
                         </Select>
                     </FormControl>
-                    <FormControl className={classes.formControl}>
-                        <TextField
+                    <FormControl className={classes.formControl} error={this.state.positionXError} required={true}>
+                        <InputLabel htmlFor="X">X</InputLabel>
+                        <Input
                             id="X"
                             placeholder="X position"
-                            label="X"
                             value={this.state.position.x}
                             onChange={this.handleChangeXPosition}
-                            margin="normal"
+                            type="text"
                         />
                     </FormControl>
-                    <FormControl className={classes.formControl}>
-                        <TextField
+                    <FormControl className={classes.formControl} error={this.state.positionYError} required={true}>
+                        <InputLabel htmlFor="Y">Y</InputLabel>
+                        <Input
                             id="Y"
                             placeholder="Y position"
-                            label="Y"
                             value={this.state.position.y}
                             onChange={this.handleChangeYPosition}
-                            margin="normal"
+                            type="text"
                         />
                     </FormControl>
                 </DialogContent>
                 <DialogActions>
                     <Grid container spacing={8}>
                         <Grid item xs={3}>
-                            <Button onClick={this.handleClose} color="primary" variant='contained' className={classes.button}>
+                            <Button
+                                onClick={this.handleClose}
+                                color="primary"
+                                variant='contained'
+                                className={classes.button}
+                            >
                                 Cancel
                             </Button>
                         </Grid>
                         <Grid item xs={6}>
-                            <Button onClick={this.handleConfirm} color="primary" variant='contained' className={classes.button}>
+                            <Button
+                                onClick={this.handleConfirm}
+                                color="primary"
+                                variant='contained'
+                                className={classes.button}
+                                disabled={this.state.disableConfirm}
+                            >
                                 Ok
                             </Button>
                         </Grid>
                         <Grid item xs={3}>
-                            <Button onClick={this.handleDelete} color="secondary" variant='contained' className={classes.button}>
+                            <Button
+                                onClick={this.handleDelete}
+                                color="secondary"
+                                variant='contained'
+                                className={classes.button}
+                            >
                                 Delete
                             </Button>
                         </Grid>
