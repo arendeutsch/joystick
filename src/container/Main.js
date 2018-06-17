@@ -7,6 +7,8 @@ import NavBar from '../container/NavBar';
 
 import Boat from '../assets/components/Boat/Boat'
 import TableCustom from '../assets/components/TableCustom/TableCustom';
+import ThrusterDialog from '../assets/components/ThrusterDialog/ThrusterDialog';
+import MessageDialog from '../assets/components/MessageDialog/MessageDialog';
 
 import Konva from 'konva';
 import { Stage, Layer, Text, Ring, RegularPolygon, Rect, Line, Group } from 'react-konva';
@@ -20,8 +22,9 @@ import StepLabel from '@material-ui/core/StepLabel';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 
-import { withStyles } from '@material-ui/core/styles';
-import { colors } from "../config";
+import { withStyles, MuiThemeProvider } from '@material-ui/core/styles';
+
+import { colors, theme } from "../config";
 
 const drawerWidth = 200;
 
@@ -35,7 +38,8 @@ const styles = theme => ({
         display: 'flex',
     },
     rootStepper: {
-        width: '100%',
+        width: '85%',
+        padding: '0',
     },
     appBar: {
         zIndex: theme.zIndex.drawer + 1,
@@ -77,7 +81,7 @@ function getStepContent(stepIndex) {
         case 1:
             return 'Drag the anchor points to draw the vessel. Press the Next button when finished';
         case 2:
-            return 'Add thrusters to the vessel,.Press the Next button when finished';
+            return 'Add thrusters to the vessel. Double click on each in order to scale or rotate. Press the Next button when finished';
         case 3:
             return 'All Done ? Press the Finish button';
         default:
@@ -94,34 +98,44 @@ class Main extends React.Component {
     constructor(props) {
         super(props);
         this.azimuthRef = React.createRef();
+        this.layerControlRef = React.createRef();
 
         this.state = {
             activeTab: 0,
             tabTitle: '',
             activeStep: 0,
+            showThrusterDialog: null,
+            messageDialog: null,
         };
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        console.log('active step: ' + this.state.activeStep);
-        const anchorLayer = this.refs.anchorLayer;
-        const elementsLayer = this.refs.elementsLayer;
-        const lineLayer = this.refs.lineLayer;
-        if (this.state.activeStep ===1) {
-            if (anchorLayer !== null) {
-                anchorLayer.visible(true);
+        if (this.state.activeTab === tabIds.BUILD) {
+            const anchorLayer = this.refs.anchorLayer;
+            const elementsLayer = this.refs.elementsLayer;
+            const lineLayer = this.refs.lineLayer;
+            if (this.state.activeStep ===1) {
+                if (anchorLayer !== null) {
+                    anchorLayer.visible(true);
+                    elementsLayer.visible(false);
+                }
+            } else if (this.state.activeStep === 2) {
+                if (anchorLayer !== null && elementsLayer !== null) {
+                    anchorLayer.visible(false);
+                    elementsLayer.visible(true);
+                }
+            } else if (this.state.activeStep === 3) {
+                lineLayer.visible(true);
                 elementsLayer.visible(false);
+                // children 0-3 are the line that draw the vessel. the rest are added thrusters
             }
-        } else if (this.state.activeStep === 2) {
-            if (anchorLayer !== null && elementsLayer !== null) {
-                anchorLayer.visible(false);
-                elementsLayer.visible(true);
+        }
+        if (this.state.activeTab === tabIds.MAPS) {
+            const map = this.refs.leafletMap.leafletElement;
+            const layerControl = this.layerControlRef.current;
+            if (map !== null && layerControl !== null) {
+                this.handleShowWind(map, layerControl);
             }
-        } else if (this.state.activeStep === 3) {
-            lineLayer.visible(true);
-            elementsLayer.visible(false);
-            // children 0-3 are the line that draw the vessel. the rest are added thrusters
-            console.log(lineLayer.children);
         }
     }
 
@@ -136,11 +150,54 @@ class Main extends React.Component {
         console.log(err);
     };
 
-    handleShowWind = () => {
+    handleThrusterDialog = (clone) => {
+        this.setState({
+            showThrusterDialog: (
+                <ThrusterDialog
+                    thrusterNode={clone}
+                    onClose={this.handleCloseThrusterDialog}
+                    onConfirm={this.handleCloseThrusterDialog}
+                    onDelete={this.handleThrusterDelete}
+                />
+            ),
+        });
+    };
+
+    handleCloseThrusterDialog = () => {
+        this.setState({
+            showThrusterDialog: null,
+        });
+    };
+
+    handleThrusterDelete = (thruster) => {
+        thruster.destroy();
+        this.refs.lineLayer.draw();
+        this.setState({
+            showThrusterDialog: null,
+        },() => {
+            this.setState({
+                messageDialog: (
+                    <MessageDialog
+                        variant="success"
+                        message={"Thruster Deleted from stage"}
+                        onClose={this.handleMessageDialogClose}
+                    />
+                ),
+            });
+        })
+    };
+
+    handleMessageDialogClose = () => {
+        this.setState({
+            messageDialog: null,
+        });
+    };
+
+    handleShowWind = (mapRef, layerControlRef) => {
         WindJSLeaflet.init({
             localMode: false,
-            map: this.refs.leafletMap.leafletElement,
-            layerControl: this.refs.leafletLayerControl.leafletElement,
+            map: mapRef,
+            layerControl: layerControlRef,
             useNearest: false,
             timeISO: null,
             nearestDaysLimit: 7,
@@ -235,10 +292,10 @@ class Main extends React.Component {
 
         });
 
-        anchor.on('dragend', function() {
+        anchor.on('dragend', () => {
             this.drawCurves();
             this.updateDottedLines();
-        }.bind(this));
+        });
 
         anchorLayer.add(anchor);
         return anchor;
@@ -399,9 +456,8 @@ class Main extends React.Component {
                             />
                             <Group
                                 ref="azimuth"
-                                onMouseDown={this.handleStageMouseDown}
-                                onDragStart={this.handleStageDragStart}
-                                onDragEnd={this.handleStageDragEnded}
+                                onMouseDown={this.handleCloneThruster}
+                                onClick={this.handleThrusterDialog}
                                 draggable={true}
                                 rotation={0}
                                 x={110}
@@ -487,7 +543,7 @@ class Main extends React.Component {
                                 />
                             </Group>
                             <Rect
-                                onMouseDown={this.handleStageMouseDown}
+                                onMouseDown={this.handleCloneThruster}
                                 draggable={true}
                                 x={150}
                                 y={180}
@@ -547,14 +603,13 @@ class Main extends React.Component {
         });
     };
 
-    handleStageMouseDown = (event) => {
+    handleCloneThruster = (event) => {
         let shape = null;
         if (event.target.className === 'Rect'){
             shape = event.target;
         } else {
             shape = this.refs.azimuth;
         }
-        // const azimuth = this.azimuthRef.current;
 
         shape.stopDrag();
         const clone = shape.clone({
@@ -565,55 +620,73 @@ class Main extends React.Component {
         clone.off('dragstart');
 
         const elementsLayer = this.refs.elementsLayer;
-        const lineLayer = this.refs.lineLayer;
 
         // then add to layer and start dragging new shape
         elementsLayer.add(clone);
         clone.startDrag();
 
         clone.on('dragstart', () => {
-            console.log('dragstart');
-            clone.moveTo(lineLayer);
-            if (this.tween) {
-                this.tween.pause();
-            }
-            clone.setAttrs({
-                shadowOffset: {
-                    x: 8,
-                    y: 8,
-                },
-                scale: {
-                    x: clone.getAttr('startScale') * 1.1,
-                    y: clone.getAttr('startScale') * 1.1,
-                }
-            });
+            this.handleCloneStartDrag(clone);
         });
         clone.on('dragend', () => {
-            this.tween = new Konva.Tween({
-                node: clone,
-                duration: 0.5,
-                easing: Konva.Easings.ElasticEaseOut,
-                scaleX: clone.getAttr('startScale'),
-                scaleY: clone.getAttr('startScale'),
-                shadowOffsetX: 5,
-                shadowOffsetY: 5,
-            });
-            this.tween.play();
-            // removing dash stroke from clone
-            if (clone.nodeType === 'Group') {
-                for (let i= 0; i < clone.children.length; i++) {
-                    clone.children[i].dash([0,0]);
-                }
-            } else {
-                clone.dash([0,0]);
+            this.handleCloneDragEnd(clone)
+        });
+        clone.on('mousedown', (event) => {
+            if (event.evt.which === 3) {
+                event.evt.preventDefault();
+                this.handleThrusterDialog(clone);
             }
         });
         clone.on('dblclick', () => {
-            const transformer = new Konva.Transformer();
-            lineLayer.add(transformer);
-            transformer.attachTo(clone);
-            lineLayer.draw();
+            this.handleCloneTransformation(clone);
         });
+    };
+
+    handleCloneStartDrag = (clone) => {
+        const lineLayer = this.refs.lineLayer;
+        clone.moveTo(lineLayer);
+        if (this.tween) {
+            this.tween.pause();
+        }
+        clone.setAttrs({
+            shadowOffset: {
+                x: 8,
+                y: 8,
+            },
+            scale: {
+                x: clone.getAttr('startScale') * 1.05,
+                y: clone.getAttr('startScale') * 1.05,
+            }
+        });
+    };
+
+    handleCloneDragEnd = (clone) => {
+        this.tween = new Konva.Tween({
+            node: clone,
+            duration: 0.5,
+            easing: Konva.Easings.ElasticEaseOut,
+            scaleX: clone.getAttr('startScale'),
+            scaleY: clone.getAttr('startScale'),
+            shadowOffsetX: 5,
+            shadowOffsetY: 5,
+        });
+        this.tween.play();
+        // removing dash stroke from clone
+        if (clone.nodeType === 'Group') {
+            for (let i= 0; i < clone.children.length; i++) {
+                clone.children[i].dash([0,0]);
+            }
+        } else {
+            clone.dash([0,0]);
+        }
+    };
+
+    handleCloneTransformation = (clone) => {
+        const transformer = new Konva.Transformer();
+        const lineLayer = this.refs.lineLayer;
+        lineLayer.add(transformer);
+        transformer.attachTo(clone);
+        lineLayer.draw();
     };
 
     handleMainLayerClick = (event) => {
@@ -651,7 +724,7 @@ class Main extends React.Component {
                 const {BaseLayer, Overlay} = LayersControl;
                 return (
                     <Map ref="leafletMap" className={classes.map} center={position} zoom={10}>
-                        <LayersControl ref="leafletLayerControl" position="topright">
+                        <LayersControl ref={this.layerControlRef} position="topright">
                             <BaseLayer checked name="Satellite">
                                 <TileLayer
                                     url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -698,8 +771,8 @@ class Main extends React.Component {
                 const { activeStep } = this.state;
 
                 return (
-                    <div className={classes.rootStepper}>
-                        <Stepper activeStep={activeStep} alternativeLabel>
+                    <div>
+                        <Stepper className={classes.rootStepper} activeStep={activeStep} alternativeLabel>
                             {steps.map(label => {
                                 return (
                                     <Step key={label}>
@@ -745,19 +818,22 @@ class Main extends React.Component {
         const { classes } = this.props;
 
         return (
-            <div className={classes.root}>
-                <Header
-                    title={this.state.tabTitle}
-                />
-                <NavBar
-                    onTabChange={this.handleTabChange}
-                    onShowWind={this.handleShowWind}
-                />
-                <main className={classes.content}>
-                    <div className={classes.toolbar} />
-                    {this.getActiveTab()}
-                </main>
-            </div>
+            <MuiThemeProvider theme={theme}>
+                <div className={classes.root}>
+                    <Header
+                        title={this.state.tabTitle}
+                    />
+                    <NavBar
+                        onTabChange={this.handleTabChange}
+                    />
+                    <main className={classes.content}>
+                        <div className={classes.toolbar} />
+                        {this.getActiveTab()}
+                    </main>
+                    {this.state.showThrusterDialog}
+                    {this.state.messageDialog}
+                </div>
+            </MuiThemeProvider>
         );
     }
 }
