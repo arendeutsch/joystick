@@ -93,7 +93,7 @@ class NavBar extends React.Component {
                         <ListItemIcon>
                             <MapIcon/>
                         </ListItemIcon>
-                        <ListItemText primary="Map"/>
+                        <ListItemText primary="Navigation"/>
                     </ListItem>
                     <ListItem button onClick={this.handleTabChange.bind(this, tabIds.ALARMS)}>
                         <ListItemIcon>

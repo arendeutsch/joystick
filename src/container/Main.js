@@ -5,14 +5,14 @@ import { tabIds } from '../config';
 import Header from '../container/Header';
 import NavBar from '../container/NavBar';
 
-import Boat from '../assets/components/Boat/Boat'
 import TableCustom from '../assets/components/TableCustom/TableCustom';
 import ThrusterDialog from '../assets/components/ThrusterDialog/ThrusterDialog';
 import MessageDialog from '../assets/components/MessageDialog/MessageDialog';
 
 import Konva from 'konva';
 import { Stage, Layer, Text, Ring, RegularPolygon, Rect, Line, Group } from 'react-konva';
-import { Map, TileLayer, Marker, Popup, LayersControl } from 'react-leaflet';
+import { Map, TileLayer, Marker, Popup, LayersControl, FeatureGroup } from 'react-leaflet';
+import { EditControl } from 'react-leaflet-draw';
 
 import WindJSLeaflet from 'wind-js-leaflet';
 
@@ -25,6 +25,9 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles, MuiThemeProvider } from '@material-ui/core/styles';
 
 import { colors, theme } from "../config";
+import VesslForm from "../assets/components/VesselForm/VesslForm";
+
+import axios from 'axios';
 
 const drawerWidth = 200;
 
@@ -77,7 +80,7 @@ function getSteps() {
 function getStepContent(stepIndex) {
     switch (stepIndex) {
         case 0:
-            return 'Press the Next button to begin building the vessel';
+            return 'Fill The vessel information and press the Next button to begin building the vessel';
         case 1:
             return 'Drag the anchor points to draw the vessel. Press the Next button when finished';
         case 2:
@@ -109,8 +112,20 @@ class Main extends React.Component {
         };
     }
 
+    tween = null;
+    bow = null;
+    stern = null;
+    port = null;
+    sb = null;
+    vesselArrayPoints = [];
+
     componentDidUpdate(prevProps, prevState, snapshot) {
         console.log('active build step: ' + this.state.activeStep);
+        if (this.state.activeTab === tabIds.HOME) {
+            this.drawVessel();
+            return;
+        }
+
         if (this.state.activeTab === tabIds.BUILD) {
             const anchorLayer = this.refs.anchorLayer;
             const elementsLayer = this.refs.elementsLayer;
@@ -120,6 +135,13 @@ class Main extends React.Component {
                     anchorLayer.visible(true);
                     elementsLayer.visible(false);
                 }
+                axios.get("http://localhost:8080/")
+                    .then(res => {
+                        alert("Received Successful response from server!");
+                        console.log(res.statusText);
+                    }, err => {
+                        alert("Server rejected response with: " + err);
+                });
             } else if (this.state.activeStep === 2) {
                 if (anchorLayer !== null && elementsLayer !== null) {
                     anchorLayer.visible(false);
@@ -142,18 +164,11 @@ class Main extends React.Component {
         }
     }
 
-    tween = null;
-    bow = null;
-    stern = null;
-    port = null;
-    sb = null;
-
     saveVesselPoints = (points) => {
-        let array = [];
+        this.vesselArrayPoints = [];
         points.forEach((point) => {
-            array.push(point.getAttr('x'), point.getAttr('y'));
+            this.vesselArrayPoints.push(point.getAttr('x'), point.getAttr('y'));
         });
-        console.log(array);
     };
 
     handleWindServerError = (err) => {
@@ -403,6 +418,10 @@ class Main extends React.Component {
 
     renderBuildProcess = () => {
         switch (this.state.activeStep) {
+            case 0:
+                return (
+                    <VesslForm/>
+                );
             case 1:
             case 2:
             case 3:
@@ -604,7 +623,7 @@ class Main extends React.Component {
                     break;
                 case tabIds.MAPS:
                     this.setState({
-                        tabTitle: 'Map',
+                        tabTitle: 'Navigation',
                     });
                     break;
                 case tabIds.HOME:
@@ -714,25 +733,75 @@ class Main extends React.Component {
         lineLayer.draw();
     };
 
+    drawVessel = () => {
+        const mainLayer = this.refs.mainLayer;
+        const context = mainLayer.getContext();
+        context.clear();
+        // draw bow
+        context.beginPath();
+        context.moveTo(this.vesselArrayPoints[0], this.vesselArrayPoints[1]);
+        context.bezierCurveTo(
+            this.vesselArrayPoints[2],
+            this.vesselArrayPoints[3],
+            this.vesselArrayPoints[4],
+            this.vesselArrayPoints[5],
+            this.vesselArrayPoints[6],
+            this.vesselArrayPoints[7],
+        );
+        context.setAttr('strokeStyle', 'black');
+        context.setAttr('lineWidth', 4);
+        context.stroke();
+
+        // draw startboard
+        context.beginPath();
+        context.moveTo(this.vesselArrayPoints[8], this.vesselArrayPoints[9]);
+        context.quadraticCurveTo(this.vesselArrayPoints[10], this.vesselArrayPoints[11], this.vesselArrayPoints[12], this.vesselArrayPoints[13]);
+        context.setAttr('strokeStyle', 'black');
+        context.setAttr('lineWidth', 4);
+        context.stroke();
+
+        // draw stern
+        context.beginPath();
+        context.moveTo(this.vesselArrayPoints[14], this.vesselArrayPoints[15]);
+        context.bezierCurveTo(
+            this.vesselArrayPoints[16],
+            this.vesselArrayPoints[17],
+            this.vesselArrayPoints[18],
+            this.vesselArrayPoints[19],
+            this.vesselArrayPoints[20],
+            this.vesselArrayPoints[21],
+        );
+        context.setAttr('strokeStyle', 'black');
+        context.setAttr('lineWidth', 4);
+        context.stroke();
+
+        // draw port
+        context.beginPath();
+        context.moveTo(this.vesselArrayPoints[22], this.vesselArrayPoints[23]);
+        context.quadraticCurveTo(this.vesselArrayPoints[24], this.vesselArrayPoints[25], this.vesselArrayPoints[26], this.vesselArrayPoints[27]);
+        context.setAttr('strokeStyle', 'black');
+        context.setAttr('lineWidth', 4);
+        context.stroke();
+    };
+
     getActiveTab = () => {
         const tabId = this.state.activeTab;
         const {classes} = this.props;
         switch (tabId) {
             case tabIds.HOME: {
-                const scale = Math.random();
                 return (
                     <Stage
                         ref="stage"
-                        width={800}
-                        height={900}
+                        width={window.innerWidth}
+                        height={window.innerHeight - 128}
                     >
                         <Layer
                             ref="mainLayer"
                         >
-                            <Boat
-                                ref="mainVessel"
-                                onVesselClick={this.handleMainLayerClick}
-                            />
+                            {/*<Boat*/}
+                                {/*ref="mainVessel"*/}
+                                {/*onVesselClick={this.handleMainLayerClick}*/}
+                            {/*/>*/}
                         </Layer>
                     </Stage>
                 );
@@ -767,12 +836,22 @@ class Main extends React.Component {
                                 <Marker position={position}>
                                     <Popup>
                                         <span>
-                                          Njord Dynamics <br/> HQ.
+                                          Ægir Dynamics <br/> HQ.
                                         </span>
                                     </Popup>
                                 </Marker>
                             </Overlay>
                         </LayersControl>
+                        <FeatureGroup>
+                            <EditControl
+                                position='topleft'
+                                draw={{
+                                    rectangle: false,
+                                    circlemarker: false,
+                                    polygon: false,
+                                }}
+                            />
+                        </FeatureGroup>
                     </Map>
                 );
             }

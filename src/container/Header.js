@@ -6,7 +6,7 @@ import Avatar from '@material-ui/core/Avatar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 
-import logo from '../assets/img/anchor-avatar.png';
+import logo from '../assets/img/AegirDynamics.png';
 import { colors } from "../config";
 
 const styles = theme => ({
