@@ -9,31 +9,37 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
+import Button from '@material-ui/core/Button';
 
 
 const styles = ({
     paper: {
-        width: window.innerWidth - 300,
+        width: 910,
         height: window.innerHeight - 300,
         padding: '15px',
     },
     textField: {
-        width: '250px'
+        width: '100%'
     },
     item: {
         paddingBottom: 0,
         paddingTop: 0,
     },
     formControl: {
-        minWidth: 250,
+        minWidth: '100%',
         paddingTop: 15,
+    },
+    button: {
+        width: '100%',
+        marginTop: 50,
     },
 });
 
-class VesslForm extends React.Component {
+class VesselForm extends React.Component {
 
     static propTypes = {
         classes: PropTypes.object.isRequired,
+        onSave: PropTypes.func,
     };
 
     state = {
@@ -44,6 +50,7 @@ class VesslForm extends React.Component {
         width: '',
         lengthError: true,
         widthError: true,
+        buildYear: '',
     };
 
     regEx = new RegExp('^[0-9]+([,.][0-9]+)?$');
@@ -80,6 +87,18 @@ class VesslForm extends React.Component {
             width: width,
             widthError: !this.regEx.test(width),
         });
+    };
+
+    handleChangeDate = (event) => {
+        this.setState({
+            buildYear: event.target.value,
+        });
+    };
+
+    handleSave = () => {
+        if (this.props.onSave) {
+            this.props.onSave(this.state.vesselName, this.state.vesselHull, this.state.vesselType, this.state.buildYear, this.state.length, this.state.width);
+        }
     };
 
     render () {
@@ -137,6 +156,7 @@ class VesslForm extends React.Component {
                             InputLabelProps={{
                                 shrink: true,
                             }}
+                            onChange={this.handleChangeDate}
                         />
                     </Grid>
                 </Grid>
@@ -166,9 +186,22 @@ class VesslForm extends React.Component {
                         </FormControl>
                     </Grid>
                 </Grid>
+                <Grid container spacing={32}>
+                    <Grid item xs={12}>
+                        <Button
+                            onClick={this.handleSave}
+                            color="primary"
+                            variant='contained'
+                            className={classes.button}
+                            disabled={this.state.disableConfirm}
+                        >
+                            Save Information
+                        </Button>
+                    </Grid>
+                </Grid>
             </Paper>
         );
     }
 }
 
-export default withStyles(styles)(VesslForm);
+export default withStyles(styles)(VesselForm);

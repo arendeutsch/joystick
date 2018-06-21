@@ -169,7 +169,7 @@ class ThrusterDialog extends React.Component {
         if (this.props.onConfirm) {
             this.props.onConfirm(this.props.thrusterNode,
                 this.state.type,
-                this.state.number,
+                this.state.thrusterNumber,
                 this.state.position);
         }
     };

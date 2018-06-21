@@ -25,7 +25,7 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles, MuiThemeProvider } from '@material-ui/core/styles';
 
 import { colors, theme } from "../config";
-import VesslForm from "../assets/components/VesselForm/VesslForm";
+import VesselForm from "../assets/components/VesselForm/VesselForm";
 
 import axios from 'axios';
 
@@ -109,6 +109,7 @@ class Main extends React.Component {
             showThrusterDialog: null,
             messageDialog: null,
             vessel: [],
+            vesselId: 0,
         };
     }
 
@@ -135,13 +136,13 @@ class Main extends React.Component {
                     anchorLayer.visible(true);
                     elementsLayer.visible(false);
                 }
-                axios.get("http://localhost:8080/")
-                    .then(res => {
-                        alert("Received Successful response from server!");
-                        console.log(res.statusText);
-                    }, err => {
-                        alert("Server rejected response with: " + err);
-                });
+                // axios.get('http://localhost:8080/vessels/' + 23)
+                //     .then((response) => {
+                //         console.log(response.data);
+                //     })
+                //     .catch((error) => {
+                //         console.log(error);
+                //     });
             } else if (this.state.activeStep === 2) {
                 if (anchorLayer !== null && elementsLayer !== null) {
                     anchorLayer.visible(false);
@@ -169,7 +170,32 @@ class Main extends React.Component {
         points.forEach((point) => {
             this.vesselArrayPoints.push(point.getAttr('x'), point.getAttr('y'));
         });
-    };
+        axios.put('http://localhost:8080/vessels/' + 1, {
+            stageAnchorPoints: JSON.stringify(this.vesselArrayPoints),
+        });
+            // .then((response) => {
+            //     this.setState({
+            //         messageDialog: (
+            //             <MessageDialog
+            //                 variant="success"
+            //                 message={"Vessel was updated successfully"}
+            //                 onClose={this.handleMessageDialogClose}
+            //             />
+            //         ),
+            //     });
+            // })
+            // .catch((error) => {
+            //     this.setState({
+            //         messageDialog: (
+            //             <MessageDialog
+            //                 variant="error"
+            //                 message={"Data was not saved !!!!"}
+            //                 onClose={this.handleMessageDialogClose}
+            //             />
+            //         ),
+            //     });
+            // });
+    }
 
     handleWindServerError = (err) => {
         console.log('handle wind server error...');
@@ -193,7 +219,37 @@ class Main extends React.Component {
         console.log('type: ' + type);
         console.log('number: ' + number);
         console.log(position);
-        console.log(node);
+        console.log(JSON.stringify(node.toJSON()));
+
+        axios.post('http://localhost:8080/vessels/' + 1 + '/thrusters', {
+            number: number,
+            type: type,
+            x_cg: position.x,
+            y_cg: position.y,
+            stageNode: JSON.stringify(node.toJSON()),
+        })
+            .then((response) => {
+                this.setState({
+                    messageDialog: (
+                        <MessageDialog
+                            variant="success"
+                            message={"Thruster was save successfully to database"}
+                            onClose={this.handleMessageDialogClose}
+                        />
+                    ),
+                });
+            })
+            .catch((error) => {
+                this.setState({
+                    messageDialog: (
+                        <MessageDialog
+                            variant="error"
+                            message={"Thruster was not saved !!!!"}
+                            onClose={this.handleMessageDialogClose}
+                        />
+                    ),
+                });
+            });
 
         this.setState({
             showThrusterDialog: null,
@@ -416,11 +472,46 @@ class Main extends React.Component {
         });
     };
 
+    handleSaveVesselInformation = (name, hull, type, date, length, width) => {
+        axios.post("http://localhost:8080/vessels", {
+            name: name,
+            hull: hull,
+            type: type,
+            date: date,
+            length: length,
+            width: width,
+        })
+            .then((response) => {
+                this.setState({
+                    messageDialog: (
+                        <MessageDialog
+                            variant="success"
+                            message={"Vessel was save successfully to database"}
+                            onClose={this.handleMessageDialogClose}
+                        />
+                    ),
+                });
+            })
+            .catch((error) => {
+                this.setState({
+                    messageDialog: (
+                        <MessageDialog
+                            variant="error"
+                            message={"Vessel was not saved !!!!"}
+                            onClose={this.handleMessageDialogClose}
+                        />
+                    ),
+                });
+            });
+    };
+
     renderBuildProcess = () => {
         switch (this.state.activeStep) {
             case 0:
                 return (
-                    <VesslForm/>
+                    <VesselForm
+                        onSave={this.handleSaveVesselInformation}
+                    />
                 );
             case 1:
             case 2:
@@ -693,7 +784,8 @@ class Main extends React.Component {
             scale: {
                 x: clone.getAttr('startScale') * 1.05,
                 y: clone.getAttr('startScale') * 1.05,
-            }
+            },
+            startScale: clone.getAttr('scaleY'),
         });
     };
 
