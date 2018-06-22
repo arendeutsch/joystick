@@ -12,6 +12,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import Grid from '@material-ui/core/Grid';
+import axios from "axios/index";
 
 const styles = theme => ({
     container: {
@@ -55,7 +56,17 @@ class ThrusterDialog extends React.Component {
         disableConfirm: true,
     };
 
-    regEx = new RegExp('^[0-9]+([,.][0-9]+)?$');
+    regEx = new RegExp('^[\-0-9]+([,.][0-9]+)?$');
+
+    componentDidMount() {
+        axios.get('http://localhost:8080/thrusterTypes')
+            .then((response) => {
+                console.log(response.data);
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    }
 
     handleChangeType = (event) => {
         const type = event.target.value;

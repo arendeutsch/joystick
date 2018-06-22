@@ -123,7 +123,14 @@ class Main extends React.Component {
     componentDidUpdate(prevProps, prevState, snapshot) {
         console.log('active build step: ' + this.state.activeStep);
         if (this.state.activeTab === tabIds.HOME) {
-            this.drawVessel();
+            // axios.get('http://localhost:8080/vessels/' + this.state.vesselId + '/thrusters')
+            axios.get('http://localhost:8080/vessels/' + 12 + '/thrusters')
+                .then((response) => {
+                    this.drawVessel(response.data);
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
             return;
         }
 
@@ -136,13 +143,6 @@ class Main extends React.Component {
                     anchorLayer.visible(true);
                     elementsLayer.visible(false);
                 }
-                // axios.get('http://localhost:8080/vessels/' + 23)
-                //     .then((response) => {
-                //         console.log(response.data);
-                //     })
-                //     .catch((error) => {
-                //         console.log(error);
-                //     });
             } else if (this.state.activeStep === 2) {
                 if (anchorLayer !== null && elementsLayer !== null) {
                     anchorLayer.visible(false);
@@ -170,7 +170,7 @@ class Main extends React.Component {
         points.forEach((point) => {
             this.vesselArrayPoints.push(point.getAttr('x'), point.getAttr('y'));
         });
-        axios.put('http://localhost:8080/vessels/' + 1, {
+        axios.put('http://localhost:8080/vessels/' + this.state.vesselId, {
             stageAnchorPoints: JSON.stringify(this.vesselArrayPoints),
         });
             // .then((response) => {
@@ -208,20 +208,21 @@ class Main extends React.Component {
                 <ThrusterDialog
                     thrusterNode={clone}
                     onClose={this.handleCloseThrusterDialog}
-                    onConfirm={this.handleCloseThrusterDialog}
+                    onConfirm={this.handleConfirmThrusterDialog}
                     onDelete={this.handleThrusterDelete}
                 />
             ),
         });
     };
 
-    handleCloseThrusterDialog = (node, type, number, position) => {
-        console.log('type: ' + type);
-        console.log('number: ' + number);
-        console.log(position);
-        console.log(JSON.stringify(node.toJSON()));
+    handleCloseThrusterDialog = () => {
+        this.setState({
+            showThrusterDialog: null,
+        });
+    };
 
-        axios.post('http://localhost:8080/vessels/' + 1 + '/thrusters', {
+    handleConfirmThrusterDialog = (node, type, number, position) => {
+        axios.post('http://localhost:8080/vessels/' + this.state.vesselId + '/thrusters', {
             number: number,
             type: type,
             x_cg: position.x,
@@ -233,7 +234,7 @@ class Main extends React.Component {
                     messageDialog: (
                         <MessageDialog
                             variant="success"
-                            message={"Thruster was save successfully to database"}
+                            message={"Thruster was save successfully to added to vessel and database"}
                             onClose={this.handleMessageDialogClose}
                         />
                     ),
@@ -483,10 +484,11 @@ class Main extends React.Component {
         })
             .then((response) => {
                 this.setState({
+                    vesselId: response.data.id,
                     messageDialog: (
                         <MessageDialog
                             variant="success"
-                            message={"Vessel was save successfully to database"}
+                            message={response.data.name + " was save successfully to database with id " + response.data.id}
                             onClose={this.handleMessageDialogClose}
                         />
                     ),
@@ -825,55 +827,79 @@ class Main extends React.Component {
         lineLayer.draw();
     };
 
-    drawVessel = () => {
+    drawVessel = (data) => {
+        this.vesselArrayPoints = JSON.parse(data[0].vessel.stageAnchorPoints);
         const mainLayer = this.refs.mainLayer;
-        const context = mainLayer.getContext();
-        context.clear();
-        // draw bow
-        context.beginPath();
-        context.moveTo(this.vesselArrayPoints[0], this.vesselArrayPoints[1]);
-        context.bezierCurveTo(
-            this.vesselArrayPoints[2],
-            this.vesselArrayPoints[3],
-            this.vesselArrayPoints[4],
-            this.vesselArrayPoints[5],
-            this.vesselArrayPoints[6],
-            this.vesselArrayPoints[7],
-        );
-        context.setAttr('strokeStyle', 'black');
-        context.setAttr('lineWidth', 4);
-        context.stroke();
+        // const context = mainLayer.getContext();
+        // context.clear();
+        // // draw bow
+        // context.beginPath();
+        // context.moveTo(this.vesselArrayPoints[0], this.vesselArrayPoints[1]);
+        // context.bezierCurveTo(
+        //     this.vesselArrayPoints[2],
+        //     this.vesselArrayPoints[3],
+        //     this.vesselArrayPoints[4],
+        //     this.vesselArrayPoints[5],
+        //     this.vesselArrayPoints[6],
+        //     this.vesselArrayPoints[7],
+        // );
+        // context.setAttr('strokeStyle', 'black');
+        // context.setAttr('lineWidth', 4);
+        // context.stroke();
+        //
+        // // draw startboard
+        // context.beginPath();
+        // context.moveTo(this.vesselArrayPoints[8], this.vesselArrayPoints[9]);
+        // context.quadraticCurveTo(this.vesselArrayPoints[10], this.vesselArrayPoints[11], this.vesselArrayPoints[12], this.vesselArrayPoints[13]);
+        // context.setAttr('strokeStyle', 'black');
+        // context.setAttr('lineWidth', 4);
+        // context.stroke();
+        //
+        // // draw stern
+        // context.beginPath();
+        // context.moveTo(this.vesselArrayPoints[14], this.vesselArrayPoints[15]);
+        // context.bezierCurveTo(
+        //     this.vesselArrayPoints[16],
+        //     this.vesselArrayPoints[17],
+        //     this.vesselArrayPoints[18],
+        //     this.vesselArrayPoints[19],
+        //     this.vesselArrayPoints[20],
+        //     this.vesselArrayPoints[21],
+        // );
+        // context.setAttr('strokeStyle', 'black');
+        // context.setAttr('lineWidth', 4);
+        // context.stroke();
+        //
+        // // draw port
+        // context.beginPath();
+        // context.moveTo(this.vesselArrayPoints[22], this.vesselArrayPoints[23]);
+        // context.quadraticCurveTo(this.vesselArrayPoints[24], this.vesselArrayPoints[25], this.vesselArrayPoints[26], this.vesselArrayPoints[27]);
+        // context.setAttr('strokeStyle', 'black');
+        // context.setAttr('lineWidth', 4);
+        // context.stroke();
 
-        // draw startboard
-        context.beginPath();
-        context.moveTo(this.vesselArrayPoints[8], this.vesselArrayPoints[9]);
-        context.quadraticCurveTo(this.vesselArrayPoints[10], this.vesselArrayPoints[11], this.vesselArrayPoints[12], this.vesselArrayPoints[13]);
-        context.setAttr('strokeStyle', 'black');
-        context.setAttr('lineWidth', 4);
-        context.stroke();
+        const boat = new Konva.Line({
+            points: this.vesselArrayPoints,
+            fill: '#bab9a5',
+            stroke: 'black',
+            strokeWidth: 3,
+            closed : true,
+            bezier: true,
+            // tension : 0.3
+        });
 
-        // draw stern
-        context.beginPath();
-        context.moveTo(this.vesselArrayPoints[14], this.vesselArrayPoints[15]);
-        context.bezierCurveTo(
-            this.vesselArrayPoints[16],
-            this.vesselArrayPoints[17],
-            this.vesselArrayPoints[18],
-            this.vesselArrayPoints[19],
-            this.vesselArrayPoints[20],
-            this.vesselArrayPoints[21],
-        );
-        context.setAttr('strokeStyle', 'black');
-        context.setAttr('lineWidth', 4);
-        context.stroke();
+        mainLayer.add(boat);
 
-        // draw port
-        context.beginPath();
-        context.moveTo(this.vesselArrayPoints[22], this.vesselArrayPoints[23]);
-        context.quadraticCurveTo(this.vesselArrayPoints[24], this.vesselArrayPoints[25], this.vesselArrayPoints[26], this.vesselArrayPoints[27]);
-        context.setAttr('strokeStyle', 'black');
-        context.setAttr('lineWidth', 4);
-        context.stroke();
+        //draw thrusters on vessel
+        data.forEach((thruster) => {
+            const node = Konva.Node.create(JSON.parse(thruster.stageNode));
+            node.setAttrs({
+                draggable: false,
+            });
+            mainLayer.add(node);
+        });
+
+        mainLayer.draw();
     };
 
     getActiveTab = () => {
