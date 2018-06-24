@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Joy from 'react-joystick';
+import axios from 'axios';
 
 const joyOptions = {
     mode: 'semi',
@@ -21,8 +22,11 @@ class Joystick extends React.Component {
 
     managerListener = (manager) => {
         manager.on('move', (e, stick) => {
-            console.log(stick.angle);
-            console.log(stick.distance);
+            axios.post('http://localhost:8080/vessel/jcmd', {
+                thrust: (stick.distance * 2).toString(),
+                angleDeg: stick.angle.degree.toString(),
+                angleRad: stick.angle.radian.toString(),
+            });
         });
         manager.on('end', () => {
             console.log('I ended!')

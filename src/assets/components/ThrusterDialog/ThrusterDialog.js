@@ -12,6 +12,8 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import Grid from '@material-ui/core/Grid';
+import InputAdornment from '@material-ui/core/InputAdornment';
+
 import axios from "axios/index";
 
 const styles = theme => ({
@@ -21,7 +23,7 @@ const styles = theme => ({
     },
     formControl: {
         margin: theme.spacing.unit,
-        minWidth: 120,
+        width: '100%',
     },
     button: {
         width: '100%',
@@ -54,6 +56,9 @@ class ThrusterDialog extends React.Component {
         positionYError: true,
         typeError: true,
         disableConfirm: true,
+        types: null,
+        effect: 0,
+        effectError: true,
     };
 
     regEx = new RegExp('^[\-0-9]+([,.][0-9]+)?$');
@@ -61,12 +66,59 @@ class ThrusterDialog extends React.Component {
     componentDidMount() {
         axios.get('http://localhost:8080/thrusterTypes')
             .then((response) => {
-                console.log(response.data);
+                this.setState({
+                    types: response.data,
+                });
             })
             .catch((error) => {
                 console.log(error);
             });
     }
+
+    getTypes = () => {
+        const { classes } = this.props;
+        let items = null;
+        if (this.state.types !== null) {
+            console.log(this.state.types);
+            items = this.state.types.map((item) =>
+                    <MenuItem
+                        className={classes.item}
+                        key={item.id}
+                        value={item.id}
+                    >
+                        {item.type}
+                    </MenuItem>
+            );
+        }
+        return items;
+    };
+
+    handleEffectChange = (event) => {
+        const effect = event.target.value;
+        if (effect > 0) {
+            this.setState({
+                effect: effect,
+                effectError: false,
+            }, () => {
+                if (!this.state.numberError
+                    && !this.state.positionXError
+                    && !this.state.positionYError
+                    && this.state.thrusterNumber > 0
+                    && !this.state.typeError
+                    && !this.state.effectError) {
+                    this.setState({
+                        disableConfirm: false,
+                    });
+                }
+            });
+        } else {
+            this.setState({
+                effect: effect,
+                effectError: true,
+                disableConfirm: true,
+            });
+        }
+    };
 
     handleChangeType = (event) => {
         const type = event.target.value;
@@ -75,7 +127,12 @@ class ThrusterDialog extends React.Component {
                 type: type,
                 typeError : false,
             }, () => {
-                if (!this.state.numberError && !this.state.positionXError && !this.state.positionYError && this.state.thrusterNumber > 0 && !this.state.typeError) {
+                if (!this.state.numberError
+                    && !this.state.positionXError
+                    && !this.state.positionYError
+                    && this.state.thrusterNumber > 0
+                    && !this.state.typeError
+                    && !this.state.effectError) {
                     this.setState({
                         disableConfirm: false,
                     });
@@ -89,7 +146,12 @@ class ThrusterDialog extends React.Component {
             this.setState({
                 typeError : true,
             }, () => {
-                if (!this.state.numberError && !this.state.positionXError && !this.state.positionYError && this.state.thrusterNumber > 0 && !this.state.typeError) {
+                if (!this.state.numberError
+                    && !this.state.positionXError
+                    && !this.state.positionYError
+                    && this.state.thrusterNumber > 0
+                    && !this.state.typeError
+                    && !this.state.effectError) {
                     this.setState({
                         disableConfirm: false,
                     });
@@ -115,7 +177,12 @@ class ThrusterDialog extends React.Component {
                 thrusterNumber: number,
                 numberError: false,
             }, () => {
-                if (!this.state.numberError && !this.state.positionXError && !this.state.positionYError && this.state.thrusterNumber > 0 && !this.state.typeError) {
+                if (!this.state.numberError
+                    && !this.state.positionXError
+                    && !this.state.positionYError
+                    && this.state.thrusterNumber > 0
+                    && !this.state.typeError
+                    && !this.state.effectError) {
                     this.setState({
                         disableConfirm: false,
                     });
@@ -137,7 +204,12 @@ class ThrusterDialog extends React.Component {
             },
             positionXError: !this.regEx.test(x),
         }, ()=> {
-            if (!this.state.numberError && !this.state.positionXError && !this.state.positionYError && this.state.thrusterNumber > 0 && !this.state.typeError) {
+            if (!this.state.numberError
+                && !this.state.positionXError
+                && !this.state.positionYError
+                && this.state.thrusterNumber > 0
+                && !this.state.typeError
+                && !this.state.effectError) {
                 this.setState({
                     disableConfirm: false,
                 });
@@ -158,7 +230,12 @@ class ThrusterDialog extends React.Component {
             },
             positionYError: !this.regEx.test(y),
         }, () => {
-            if (!this.state.numberError && !this.state.positionXError && !this.state.positionYError && this.state.thrusterNumber > 0 && !this.state.typeError) {
+            if (!this.state.numberError
+                && !this.state.positionXError
+                && !this.state.positionYError
+                && this.state.thrusterNumber > 0
+                && !this.state.typeError
+                && !this.state.effectError) {
                 this.setState({
                     disableConfirm: false,
                 });
@@ -181,7 +258,8 @@ class ThrusterDialog extends React.Component {
             this.props.onConfirm(this.props.thrusterNode,
                 this.state.type,
                 this.state.thrusterNumber,
-                this.state.position);
+                this.state.position,
+                this.state.effect);
         }
     };
 
@@ -202,48 +280,75 @@ class ThrusterDialog extends React.Component {
             >
                 <DialogTitle>Thruster Configuration</DialogTitle>
                 <DialogContent>
-                    <FormControl className={classes.formControl} error={this.state.numberError} required={true}>
-                        <InputLabel htmlFor="number">Number</InputLabel>
-                        <Input
-                            id="number"
-                            value={this.state.thrusterNumber}
-                            onChange={this.handleChangeNumber}
-                            type="number"
-                            />
-                    </FormControl>
-                    <FormControl className={classes.formControl} error={this.state.typeError} required={true}>
-                        <InputLabel htmlFor="thruster-type">Type</InputLabel>
-                        <Select
-                            value={this.state.type}
-                            onChange={this.handleChangeType}
-                            input={<Input id="thruster-type" />}
-                        >
-                            <MenuItem className={classes.item} value={0}><em>None</em></MenuItem>
-                            <MenuItem className={classes.item} value={1}>Tunnel</MenuItem>
-                            <MenuItem className={classes.item} value={2}>Azimuth</MenuItem>
-                            <MenuItem className={classes.item} value={3}>Rudder</MenuItem>
-                        </Select>
-                    </FormControl>
-                    <FormControl className={classes.formControl} error={this.state.positionXError} required={true}>
-                        <InputLabel htmlFor="X">X</InputLabel>
-                        <Input
-                            id="X"
-                            placeholder="X position"
-                            value={this.state.position.x}
-                            onChange={this.handleChangeXPosition}
-                            type="text"
-                        />
-                    </FormControl>
-                    <FormControl className={classes.formControl} error={this.state.positionYError} required={true}>
-                        <InputLabel htmlFor="Y">Y</InputLabel>
-                        <Input
-                            id="Y"
-                            placeholder="Y position"
-                            value={this.state.position.y}
-                            onChange={this.handleChangeYPosition}
-                            type="text"
-                        />
-                    </FormControl>
+                    <Grid container={true} spacing={8}>
+                        <Grid item xs={6}>
+                            <FormControl className={classes.formControl} error={this.state.numberError} required={true}>
+                                <InputLabel htmlFor="number">Number</InputLabel>
+                                <Input
+                                    id="number"
+                                    value={this.state.thrusterNumber}
+                                    onChange={this.handleChangeNumber}
+                                    type="number"
+                                    />
+                            </FormControl>
+                        </Grid>
+                        <Grid item xs={6}>
+                            <FormControl className={classes.formControl} error={this.state.typeError} required={true}>
+                                <InputLabel htmlFor="thruster-type">Type</InputLabel>
+                                <Select
+                                    value={this.state.type}
+                                    onChange={this.handleChangeType}
+                                    input={<Input id="thruster-type" />}
+                                >
+                                    <MenuItem className={classes.item} value={0}><em>None</em></MenuItem>
+                                    {this.getTypes()}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        <Grid item xs={12}>
+                            <FormControl className={classes.formControl} error={this.state.effectError} required={true}>
+                                <InputLabel htmlFor="thruster-effect">Effect</InputLabel>
+                                <Input
+                                    id="thruster-effect"
+                                    value={this.state.effect}
+                                    onChange={this.handleEffectChange}
+                                    endAdornment={
+                                        <InputAdornment position={"start"}>kW</InputAdornment>
+                                    }
+                                />
+                            </FormControl>
+                        </Grid>
+                        <Grid item xs={6}>
+                            <FormControl className={classes.formControl} error={this.state.positionXError} required={true}>
+                                <InputLabel htmlFor="X">X</InputLabel>
+                                <Input
+                                    id="X"
+                                    placeholder="X position"
+                                    value={this.state.position.x}
+                                    onChange={this.handleChangeXPosition}
+                                    type="text"
+                                    endAdornment={
+                                        <InputAdornment position={"start"}>m</InputAdornment>
+                                    }
+                                />
+                            </FormControl>
+                        </Grid>
+                        <Grid item xs={6}>
+                            <FormControl className={classes.formControl} error={this.state.positionYError} required={true}>
+                                <InputLabel htmlFor="Y">Y</InputLabel>
+                                <Input
+                                    id="Y"
+                                    placeholder="Y position"
+                                    value={this.state.position.y}
+                                    onChange={this.handleChangeYPosition}
+                                    type="text"
+                                    endAdornment={
+                                        <InputAdornment position={"start"}>m</InputAdornment>
+                                    }
+                                />
+                            </FormControl>
+                        </Grid>
+                    </Grid>
                 </DialogContent>
                 <DialogActions>
                     <Grid container spacing={8}>
@@ -265,7 +370,7 @@ class ThrusterDialog extends React.Component {
                                 className={classes.button}
                                 disabled={this.state.disableConfirm}
                             >
-                                Ok
+                                Save
                             </Button>
                         </Grid>
                         <Grid item xs={3}>

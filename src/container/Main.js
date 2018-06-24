@@ -109,7 +109,7 @@ class Main extends React.Component {
             showThrusterDialog: null,
             messageDialog: null,
             vessel: [],
-            vesselId: 0,
+            vesselId: 1,
         };
     }
 
@@ -123,8 +123,7 @@ class Main extends React.Component {
     componentDidUpdate(prevProps, prevState, snapshot) {
         console.log('active build step: ' + this.state.activeStep);
         if (this.state.activeTab === tabIds.HOME) {
-            // axios.get('http://localhost:8080/vessels/' + this.state.vesselId + '/thrusters')
-            axios.get('http://localhost:8080/vessels/' + 12 + '/thrusters')
+            axios.get('http://localhost:8080/vessels/' + this.state.vesselId + '/thrusters')
                 .then((response) => {
                     this.drawVessel(response.data);
                 })
@@ -221,12 +220,13 @@ class Main extends React.Component {
         });
     };
 
-    handleConfirmThrusterDialog = (node, type, number, position) => {
+    handleConfirmThrusterDialog = (node, type, number, position, effect) => {
         axios.post('http://localhost:8080/vessels/' + this.state.vesselId + '/thrusters', {
             number: number,
             type: type,
             x_cg: position.x,
             y_cg: position.y,
+            effect: effect,
             stageNode: JSON.stringify(node.toJSON()),
         })
             .then((response) => {
@@ -234,7 +234,7 @@ class Main extends React.Component {
                     messageDialog: (
                         <MessageDialog
                             variant="success"
-                            message={"Thruster was save successfully to added to vessel and database"}
+                            message={"Thruster successfully saved and added to vessel/database"}
                             onClose={this.handleMessageDialogClose}
                         />
                     ),
@@ -884,8 +884,8 @@ class Main extends React.Component {
             stroke: 'black',
             strokeWidth: 3,
             closed : true,
-            bezier: true,
-            // tension : 0.3
+            // bezier: true,
+            tension : 0.3
         });
 
         mainLayer.add(boat);

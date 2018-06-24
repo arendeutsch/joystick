@@ -10,6 +10,7 @@ import Select from '@material-ui/core/Select';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
 import Button from '@material-ui/core/Button';
+import axios from "axios/index";
 
 
 const styles = ({
@@ -51,9 +52,40 @@ class VesselForm extends React.Component {
         lengthError: true,
         widthError: true,
         buildYear: '',
+        types: null,
     };
 
     regEx = new RegExp('^[0-9]+([,.][0-9]+)?$');
+
+    componentDidMount() {
+        axios.get('http://localhost:8080/vesselTypes')
+            .then((response) => {
+                this.setState({
+                    types: response.data,
+                });
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    }
+
+    getTypes = () => {
+        const { classes } = this.props;
+        let items = null;
+        if (this.state.types !== null) {
+            console.log(this.state.types);
+            items = this.state.types.map((item) =>
+                <MenuItem
+                    className={classes.item}
+                    key={item.id}
+                    value={item.id}
+                >
+                    {item.type}
+                </MenuItem>
+            );
+        }
+        return items;
+    };
 
     handleNameChange = (event) => {
         this.setState({
@@ -139,11 +171,7 @@ class VesselForm extends React.Component {
                                 input={<Input id="vessel-type" />}
                             >
                                 <MenuItem className={classes.item} value={0}><em>Type</em></MenuItem>
-                                <MenuItem className={classes.item} value={1}>OSV</MenuItem>
-                                <MenuItem className={classes.item} value={2}>Cargo</MenuItem>
-                                <MenuItem className={classes.item} value={3}>Tug</MenuItem>
-                                <MenuItem className={classes.item} value={4}>Passenger</MenuItem>
-                                <MenuItem className={classes.item} value={5}>Fishing</MenuItem>
+                                {this.getTypes()}
                             </Select>
                         </FormControl>
                     </Grid>
