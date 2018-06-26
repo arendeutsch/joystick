@@ -41,6 +41,7 @@ class NavBar extends React.Component {
     static propTypes = {
         classes: PropTypes.object.isRequired,
         onTabChange: PropTypes.func,
+        onJoyMove: PropTypes.func,
     };
 
     constructor(props) {
@@ -68,6 +69,12 @@ class NavBar extends React.Component {
     handleTabChange = (tabId) => {
         if (this.props.onTabChange) {
             this.props.onTabChange(tabId);
+        }
+    };
+
+    handleOnJoystickMove = (manager) => {
+        if (this.props.onJoyMove) {
+            this.props.onJoyMove(manager);
         }
     };
 
@@ -128,13 +135,15 @@ class NavBar extends React.Component {
                 <Divider/>
                 <ListItem button onClick={this.handleListExpand.bind(this, tabIds.JOYSTICK)}>
                     <ListItemIcon>
-                        <JoystickIcon/>
+                        <JoystickIcon />
                     </ListItemIcon>
                     <ListItemText inset primary="Joystick" secondary="Press to use"/>
                     {this.state.expandJoystickList ? <ExpandLess/> : <ExpandMore/>}
                 </ListItem>
                 <Collapse in={this.state.expandJoystickList} timeout="auto" unmountOnExit>
-                    <Joystick />
+                    <Joystick
+                        onMove={this.handleOnJoystickMove}
+                    />
                 </Collapse>
             </Drawer>
         );

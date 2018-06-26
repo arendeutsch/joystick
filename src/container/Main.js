@@ -119,10 +119,14 @@ class Main extends React.Component {
     port = null;
     sb = null;
     vesselArrayPoints = [];
+    vesselThrusters = [];
+    drawn = false;
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        console.log('active build step: ' + this.state.activeStep);
+        this.drawn = false;
+        console.log('componenet did update, step : ' + this.state.activeStep);
         if (this.state.activeTab === tabIds.HOME) {
+            if (this.refs.mainLayer)
             axios.get('http://localhost:8080/vessels/' + this.state.vesselId + '/thrusters')
                 .then((response) => {
                     this.drawVessel(response.data);
@@ -152,7 +156,6 @@ class Main extends React.Component {
             } else if (this.state.activeStep === 3) {
                 lineLayer.visible(true);
                 elementsLayer.visible(false);
-                // children 0-3 are the line that draw the vessel. the rest are added thrusters
             }
         }
         if (this.state.activeTab === tabIds.MAPS) {
@@ -828,78 +831,147 @@ class Main extends React.Component {
     };
 
     drawVessel = (data) => {
-        this.vesselArrayPoints = JSON.parse(data[0].vessel.stageAnchorPoints);
-        const mainLayer = this.refs.mainLayer;
-        // const context = mainLayer.getContext();
-        // context.clear();
-        // // draw bow
-        // context.beginPath();
-        // context.moveTo(this.vesselArrayPoints[0], this.vesselArrayPoints[1]);
-        // context.bezierCurveTo(
-        //     this.vesselArrayPoints[2],
-        //     this.vesselArrayPoints[3],
-        //     this.vesselArrayPoints[4],
-        //     this.vesselArrayPoints[5],
-        //     this.vesselArrayPoints[6],
-        //     this.vesselArrayPoints[7],
-        // );
-        // context.setAttr('strokeStyle', 'black');
-        // context.setAttr('lineWidth', 4);
-        // context.stroke();
-        //
-        // // draw startboard
-        // context.beginPath();
-        // context.moveTo(this.vesselArrayPoints[8], this.vesselArrayPoints[9]);
-        // context.quadraticCurveTo(this.vesselArrayPoints[10], this.vesselArrayPoints[11], this.vesselArrayPoints[12], this.vesselArrayPoints[13]);
-        // context.setAttr('strokeStyle', 'black');
-        // context.setAttr('lineWidth', 4);
-        // context.stroke();
-        //
-        // // draw stern
-        // context.beginPath();
-        // context.moveTo(this.vesselArrayPoints[14], this.vesselArrayPoints[15]);
-        // context.bezierCurveTo(
-        //     this.vesselArrayPoints[16],
-        //     this.vesselArrayPoints[17],
-        //     this.vesselArrayPoints[18],
-        //     this.vesselArrayPoints[19],
-        //     this.vesselArrayPoints[20],
-        //     this.vesselArrayPoints[21],
-        // );
-        // context.setAttr('strokeStyle', 'black');
-        // context.setAttr('lineWidth', 4);
-        // context.stroke();
-        //
-        // // draw port
-        // context.beginPath();
-        // context.moveTo(this.vesselArrayPoints[22], this.vesselArrayPoints[23]);
-        // context.quadraticCurveTo(this.vesselArrayPoints[24], this.vesselArrayPoints[25], this.vesselArrayPoints[26], this.vesselArrayPoints[27]);
-        // context.setAttr('strokeStyle', 'black');
-        // context.setAttr('lineWidth', 4);
-        // context.stroke();
+        if (!this.drawn) {
+            console.log('drawing vessel');
+            this.vesselArrayPoints = JSON.parse(data[0].vessel.stageAnchorPoints);
+            this.vesselThrusters = [];
+            const mainLayer = this.refs.mainLayer;
+            const mainLayerThrusters = this.refs.mainLayerThrusters;
+            const context = mainLayer.getContext();
+            context.clear();
+            // draw bow
+            context.beginPath();
+            context.moveTo(this.vesselArrayPoints[0], this.vesselArrayPoints[1]);
+            context.bezierCurveTo(
+                this.vesselArrayPoints[2],
+                this.vesselArrayPoints[3],
+                this.vesselArrayPoints[4],
+                this.vesselArrayPoints[5],
+                this.vesselArrayPoints[6],
+                this.vesselArrayPoints[7],
+            );
+            context.setAttr('strokeStyle', 'black');
+            context.setAttr('lineWidth', 4);
+            context.stroke();
 
-        const boat = new Konva.Line({
-            points: this.vesselArrayPoints,
-            fill: '#bab9a5',
-            stroke: 'black',
-            strokeWidth: 3,
-            closed : true,
-            // bezier: true,
-            tension : 0.3
-        });
+            // draw startboard
+            context.beginPath();
+            context.moveTo(this.vesselArrayPoints[8], this.vesselArrayPoints[9]);
+            context.quadraticCurveTo(this.vesselArrayPoints[10], this.vesselArrayPoints[11], this.vesselArrayPoints[12], this.vesselArrayPoints[13]);
+            context.setAttr('strokeStyle', 'black');
+            context.setAttr('lineWidth', 4);
+            context.stroke();
 
-        mainLayer.add(boat);
+            // draw stern
+            context.beginPath();
+            context.moveTo(this.vesselArrayPoints[14], this.vesselArrayPoints[15]);
+            context.bezierCurveTo(
+                this.vesselArrayPoints[16],
+                this.vesselArrayPoints[17],
+                this.vesselArrayPoints[18],
+                this.vesselArrayPoints[19],
+                this.vesselArrayPoints[20],
+                this.vesselArrayPoints[21],
+            );
+            context.setAttr('strokeStyle', 'black');
+            context.setAttr('lineWidth', 4);
+            context.stroke();
 
-        //draw thrusters on vessel
-        data.forEach((thruster) => {
-            const node = Konva.Node.create(JSON.parse(thruster.stageNode));
-            node.setAttrs({
-                draggable: false,
+            // draw port
+            context.beginPath();
+            context.moveTo(this.vesselArrayPoints[22], this.vesselArrayPoints[23]);
+            context.quadraticCurveTo(this.vesselArrayPoints[24], this.vesselArrayPoints[25], this.vesselArrayPoints[26], this.vesselArrayPoints[27]);
+            context.setAttr('strokeStyle', 'black');
+            context.setAttr('lineWidth', 4);
+            context.stroke();
+
+            // const boat = new Konva.Line({
+            //     points: this.vesselArrayPoints,
+            //     fill: '#bab9a5',
+            //     stroke: 'black',
+            //     strokeWidth: 3,
+            //     closed : true,
+            //     // bezier: true,
+            //     tension : 0.3
+            // });
+
+            // mainLayer.add(boat);
+
+            //draw thrusters on vessel
+            data.forEach((thruster) => {
+                const node = Konva.Node.create(JSON.parse(thruster.stageNode));
+                node.setAttrs({
+                    draggable: false,
+                });
+                this.vesselThrusters.push(node);
+                mainLayerThrusters.add(node);
             });
-            mainLayer.add(node);
-        });
+            mainLayerThrusters.draw();
+            this.drawn = true;
+        }
 
-        mainLayer.draw();
+    };
+    // fillLinearGradientStartPoint={{x:0,y:0}}
+    // fillLinearGradientEndPoint={{x:14, y:74}}
+    // fillLinearGradientColorStops={[0, this.props.background, (100 - this.state.thrust)/100, this.props.background, (100 -this.state.thrust + 5)/100, '#1465c1', 1, '#2b53cc']}
+    // second and third point changes dynamically to create graduate fill effect.
+    // second point should always be a bit lower than third point
+    handleJoystickCommand = (manager) => {
+        manager.on('move', (e, stick) => {
+            axios.post('http://localhost:8080/vessel/jcmd', {
+                thrust: (stick.distance * 2).toString(),
+                angleDeg: stick.angle.degree.toString(),
+                angleRad: stick.angle.radian.toString(),
+            })
+                .then((response) => {
+                    this.vesselThrusters[2].setAttrs({
+                        rotation: stick.angle.degree,
+                    });
+                    this.vesselThrusters[2].children[1].fillLinearGradientStartPoint({
+                        x: 0,
+                        y: 0,
+                    });
+                    this.vesselThrusters[2].children[1].fillLinearGradientEndPoint({
+                        x: 14,
+                        y: 74,
+                    });
+                    this.vesselThrusters[2].children[1].fillLinearGradientColorStops([
+                        0,
+                        'white',
+                        (100 - stick.distance*2)/100,
+                        'white',
+                        (100 - stick.distance*2)/100,
+                        '#1a6da0',
+                        1,
+                        '#2b53cc'
+                    ]);
+                    this.vesselThrusters[3].setAttrs({
+                        rotation: stick.angle.degree,
+                    });
+                    this.vesselThrusters[3].children[1].fillLinearGradientStartPoint({
+                        x: 0,
+                        y: 0,
+                    });
+                    this.vesselThrusters[3].children[1].fillLinearGradientEndPoint({
+                        x: 14,
+                        y: 74,
+                    });
+                    this.vesselThrusters[3].children[1].fillLinearGradientColorStops([
+                        0,
+                        'white',
+                        (100 - stick.distance*2)/100,
+                        'white',
+                        (100 - stick.distance*2)/100,
+                        '#1a6da0',
+                        1,
+                        '#2b53cc'
+                    ]);
+                    this.refs.mainLayerThrusters.draw();
+                });
+        });
+        manager.on('end', () => {
+            console.log('Joystick released!')
+        });
     };
 
     getActiveTab = () => {
@@ -916,10 +988,10 @@ class Main extends React.Component {
                         <Layer
                             ref="mainLayer"
                         >
-                            {/*<Boat*/}
-                                {/*ref="mainVessel"*/}
-                                {/*onVesselClick={this.handleMainLayerClick}*/}
-                            {/*/>*/}
+                        </Layer>
+                        <Layer
+                            ref="mainLayerThrusters"
+                        >
                         </Layer>
                     </Stage>
                 );
@@ -1040,6 +1112,7 @@ class Main extends React.Component {
                     />
                     <NavBar
                         onTabChange={this.handleTabChange}
+                        onJoyMove={this.handleJoystickCommand}
                     />
                     <main className={classes.content}>
                         <div className={classes.toolbar} />

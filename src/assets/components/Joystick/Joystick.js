@@ -1,7 +1,7 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import Joy from 'react-joystick';
-import axios from 'axios';
 
 const joyOptions = {
     mode: 'semi',
@@ -20,17 +20,13 @@ const joyStyle = {
 
 class Joystick extends React.Component {
 
+    static propTypes = {
+        onMove: PropTypes.func,
+    }
     managerListener = (manager) => {
-        manager.on('move', (e, stick) => {
-            axios.post('http://localhost:8080/vessel/jcmd', {
-                thrust: (stick.distance * 2).toString(),
-                angleDeg: stick.angle.degree.toString(),
-                angleRad: stick.angle.radian.toString(),
-            });
-        });
-        manager.on('end', () => {
-            console.log('I ended!')
-        });
+        if (this.props.onMove) {
+            this.props.onMove(manager);
+        }
     };
 
     render() {
