@@ -5,8 +5,19 @@ import AppBar from '@material-ui/core/AppBar';
 import Avatar from '@material-ui/core/Avatar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
+import IconButton from '@material-ui/core/IconButton';
+import AccountCircle from '@material-ui/icons/AccountCircle';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemAvatar from '@material-ui/core/ListItemAvatar';
+import ListItemText from '@material-ui/core/ListItemText';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import Dialog from '@material-ui/core/Dialog';
 
 import logo from '../assets/img/AegirDynamics.png';
+import captainAvatar from '../assets/img/avatar_captain.png';
+import adminAvatar from '../assets/img/avatar_admin.png';
+import chiefAvatar from '../assets/img/avatar_cheif.png';
 import { colors } from "../config";
 
 const styles = theme => ({
@@ -30,6 +41,10 @@ const styles = theme => ({
         paddingLeft: 160,
         fontWeight: 700,
     },
+    menuButton: {
+        position: 'absolute',
+        right: '20px',
+    },
 });
 
 class Header extends React.Component {
@@ -41,6 +56,30 @@ class Header extends React.Component {
 
     static defaultProps = {
         title: 'Joystick App',
+    };
+
+    handleLogingDialog = () => {
+        return (
+            <Dialog onClose={this.handleClose}>
+                <DialogTitle id="simple-dialog-title">Choose account</DialogTitle>
+                <div>
+                    <List>
+                        <ListItem
+                            button
+                            onClick={() => this.handleListItemClick('addAccount')}
+                        >
+                            <ListItemAvatar>
+                                <Avatar
+                                    alt="admin"
+                                    src={adminAvatar}
+                                />
+                            </ListItemAvatar>
+                            <ListItemText primary="add account" />
+                        </ListItem>
+                    </List>
+                </div>
+            </Dialog>
+        );
     };
 
     render() {
@@ -57,6 +96,14 @@ class Header extends React.Component {
                     <Typography variant="title" color="inherit" noWrap className={classes.windowTitle}>
                         {this.props.title}
                     </Typography>
+                    <IconButton
+                        className={classes.menuButton}
+                        aria-haspopup="true"
+                        onClick={this.handleLogingDialog}
+                        color="inherit"
+                    >
+                        <AccountCircle />
+                    </IconButton>
                 </Toolbar>
             </AppBar>
         );

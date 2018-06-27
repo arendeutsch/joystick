@@ -918,12 +918,13 @@ class Main extends React.Component {
     // second point should always be a bit lower than third point
     handleJoystickCommand = (manager) => {
         manager.on('move', (e, stick) => {
-            axios.post('http://localhost:8080/vessel/jcmd', {
+            axios.post('http://localhost:8080/vessel/' + this.state.vesselId + '/getSolution', {
                 thrust: (stick.distance * 2).toString(),
                 angleDeg: stick.angle.degree.toString(),
                 angleRad: stick.angle.radian.toString(),
             })
                 .then((response) => {
+                    console.log(response.data);
                     this.vesselThrusters[2].setAttrs({
                         rotation: stick.angle.degree,
                     });
