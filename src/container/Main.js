@@ -918,15 +918,20 @@ class Main extends React.Component {
     // second point should always be a bit lower than third point
     handleJoystickCommand = (manager) => {
         manager.on('move', (e, stick) => {
+            const dx = 2 * stick.instance.frontPosition.x;
+            const dy = -2* stick.instance.frontPosition.y;
+
+            // console.log('cmd surge: ' + dx);
+            // console.log('cmd sway: ' + dy);
+
             axios.post('http://localhost:8080/vessel/' + this.state.vesselId + '/getSolution', {
-                thrust: (stick.distance * 2).toString(),
-                angleDeg: stick.angle.degree.toString(),
-                angleRad: stick.angle.radian.toString(),
+                surge: dy.toString(),
+                sway: dx.toString(),
             })
                 .then((response) => {
-                    console.log(response.data);
+                    // console.log(response.data);
                     this.vesselThrusters[2].setAttrs({
-                        rotation: stick.angle.degree,
+                        rotation: response.data.angle[2],
                     });
                     this.vesselThrusters[2].children[1].fillLinearGradientStartPoint({
                         x: 0,
@@ -939,15 +944,15 @@ class Main extends React.Component {
                     this.vesselThrusters[2].children[1].fillLinearGradientColorStops([
                         0,
                         'white',
-                        (100 - stick.distance*2)/100,
+                        (100 - response.data.thrust[2])/100,
                         'white',
-                        (100 - stick.distance*2)/100,
+                        (100 - response.data.thrust[2])/100,
                         '#1a6da0',
                         1,
                         '#2b53cc'
                     ]);
                     this.vesselThrusters[3].setAttrs({
-                        rotation: stick.angle.degree,
+                        rotation: response.data.angle[3],
                     });
                     this.vesselThrusters[3].children[1].fillLinearGradientStartPoint({
                         x: 0,
@@ -960,9 +965,9 @@ class Main extends React.Component {
                     this.vesselThrusters[3].children[1].fillLinearGradientColorStops([
                         0,
                         'white',
-                        (100 - stick.distance*2)/100,
+                        (100 - response.data.thrust[3])/100,
                         'white',
-                        (100 - stick.distance*2)/100,
+                        (100 - response.data.thrust[3])/100,
                         '#1a6da0',
                         1,
                         '#2b53cc'
