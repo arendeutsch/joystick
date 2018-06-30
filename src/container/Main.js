@@ -921,15 +921,88 @@ class Main extends React.Component {
             const dx = 2 * stick.instance.frontPosition.x;
             const dy = -2* stick.instance.frontPosition.y;
 
-            // console.log('cmd surge: ' + dx);
-            // console.log('cmd sway: ' + dy);
-
             axios.post('http://localhost:8080/vessel/' + this.state.vesselId + '/getSolution', {
                 surge: dy.toString(),
                 sway: dx.toString(),
             })
                 .then((response) => {
                     // console.log(response.data);
+                    this.vesselThrusters[0].fillLinearGradientStartPoint({
+                        x: 0,
+                        y: 0,
+                    });
+                    this.vesselThrusters[0].fillLinearGradientEndPoint({
+                        x: 0,
+                        y: 85,
+                    });
+                    if (response.data.thrust[0] < 0) {
+                        const thrust = Math.abs(response.data.thrust[0])/2 + 50;
+                        this.vesselThrusters[0].fillLinearGradientColorStops([
+                            0,
+                            colors.BACKGROUND,
+                            0.49,
+                            colors.BACKGROUND,
+                            0.5,
+                            '#1E5799',
+                            (thrust -1)/100,
+                            '#1E5799',
+                            (thrust)/100,
+                            colors.BACKGROUND
+                        ]);
+                    } else {
+                        const thrust = 50 - response.data.thrust[0]/2;
+                        this.vesselThrusters[0].fillLinearGradientColorStops([
+                            (thrust)/100,
+                            colors.BACKGROUND,
+                            (thrust)/100,
+                            '#1E5799',
+                            0.5,
+                            '#1E5799',
+                            0.51,
+                            colors.BACKGROUND,
+                            1,
+                            colors.BACKGROUND,
+                        ]);
+                    }
+
+                    this.vesselThrusters[1].fillLinearGradientStartPoint({
+                        x: 0,
+                        y: 0,
+                    });
+                    this.vesselThrusters[1].fillLinearGradientEndPoint({
+                        x: 0,
+                        y: 85,
+                    });
+                    if (response.data.thrust[1] < 0) {
+                        const thrust = Math.abs(response.data.thrust[1])/2 + 50;
+                        this.vesselThrusters[1].fillLinearGradientColorStops([
+                            0,
+                            colors.BACKGROUND,
+                            0.49,
+                            colors.BACKGROUND,
+                            0.5,
+                            '#1E5799',
+                            (thrust -1)/100,
+                            '#1E5799',
+                            (thrust)/100,
+                            colors.BACKGROUND
+                        ]);
+                    } else {
+                        const thrust = 50 - response.data.thrust[1]/2;
+                        this.vesselThrusters[1].fillLinearGradientColorStops([
+                            (thrust)/100,
+                            colors.BACKGROUND,
+                            (thrust)/100,
+                            '#1E5799',
+                            0.5,
+                            '#1E5799',
+                            0.51,
+                            colors.BACKGROUND,
+                            1,
+                            colors.BACKGROUND,
+                        ]);
+                    }
+
                     this.vesselThrusters[2].setAttrs({
                         rotation: response.data.angle[2],
                     });
@@ -938,18 +1011,18 @@ class Main extends React.Component {
                         y: 0,
                     });
                     this.vesselThrusters[2].children[1].fillLinearGradientEndPoint({
-                        x: 14,
+                        x: 0,
                         y: 74,
                     });
                     this.vesselThrusters[2].children[1].fillLinearGradientColorStops([
                         0,
-                        'white',
+                        colors.BACKGROUND,
                         (100 - response.data.thrust[2])/100,
-                        'white',
+                        colors.BACKGROUND,
                         (100 - response.data.thrust[2])/100,
-                        '#1a6da0',
+                        '#1E5799',
                         1,
-                        '#2b53cc'
+                        '#1E5799'
                     ]);
                     this.vesselThrusters[3].setAttrs({
                         rotation: response.data.angle[3],
@@ -959,18 +1032,18 @@ class Main extends React.Component {
                         y: 0,
                     });
                     this.vesselThrusters[3].children[1].fillLinearGradientEndPoint({
-                        x: 14,
+                        x: 0,
                         y: 74,
                     });
                     this.vesselThrusters[3].children[1].fillLinearGradientColorStops([
                         0,
-                        'white',
+                        colors.BACKGROUND,
                         (100 - response.data.thrust[3])/100,
-                        'white',
+                        colors.BACKGROUND,
                         (100 - response.data.thrust[3])/100,
-                        '#1a6da0',
+                        '#1E5799',
                         1,
-                        '#2b53cc'
+                        '#1E5799'
                     ]);
                     this.refs.mainLayerThrusters.draw();
                 });

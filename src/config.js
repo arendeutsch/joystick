@@ -22,6 +22,7 @@ const colors = {
     MAIN: blueGrey[600],
     ALARM: red[500],
     WARNING: yellow[500],
+    BACKGROUND: 'white',
 };
 
 const theme = createMuiTheme({
