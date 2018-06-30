@@ -25,6 +25,12 @@ const colors = {
     BACKGROUND: 'white',
 };
 
+const thrusterType = {
+    TUNNEL: 1,
+    AZIMUTH: 2,
+    RUDDER: 3,
+};
+
 const theme = createMuiTheme({
     palette: {
         primary: { main: blueGrey[600] },
@@ -37,4 +43,5 @@ export {
     alarmType,
     colors,
     theme,
+    thrusterType,
 };

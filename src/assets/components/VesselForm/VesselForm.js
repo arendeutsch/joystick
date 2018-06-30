@@ -73,7 +73,6 @@ class VesselForm extends React.Component {
         const { classes } = this.props;
         let items = null;
         if (this.state.types !== null) {
-            console.log(this.state.types);
             items = this.state.types.map((item) =>
                 <MenuItem
                     className={classes.item}

@@ -24,7 +24,7 @@ import Typography from '@material-ui/core/Typography';
 
 import { withStyles, MuiThemeProvider } from '@material-ui/core/styles';
 
-import { colors, theme } from "../config";
+import { colors, theme, thrusterType } from "../config";
 import VesselForm from "../assets/components/VesselForm/VesselForm";
 
 import axios from 'axios';
@@ -911,11 +911,7 @@ class Main extends React.Component {
         }
 
     };
-    // fillLinearGradientStartPoint={{x:0,y:0}}
-    // fillLinearGradientEndPoint={{x:14, y:74}}
-    // fillLinearGradientColorStops={[0, this.props.background, (100 - this.state.thrust)/100, this.props.background, (100 -this.state.thrust + 5)/100, '#1465c1', 1, '#2b53cc']}
-    // second and third point changes dynamically to create graduate fill effect.
-    // second point should always be a bit lower than third point
+
     handleJoystickCommand = (manager) => {
         manager.on('move', (e, stick) => {
             const dx = 2 * stick.instance.frontPosition.x;
@@ -926,131 +922,90 @@ class Main extends React.Component {
                 sway: dx.toString(),
             })
                 .then((response) => {
-                    // console.log(response.data);
-                    this.vesselThrusters[0].fillLinearGradientStartPoint({
-                        x: 0,
-                        y: 0,
+                    console.log(response.data);
+                    response.data.thruster_type.forEach((type, i) => {
+                        switch (type) {
+                            case thrusterType.TUNNEL:
+                                this.renderTunnelThruster(i ,response.data.thrust[i]);
+                                break;
+                            case thrusterType.AZIMUTH:
+                                this.renderAzimuthThruster(i ,response.data.thrust[i], response.data.angle[i]);
+                                break;
+                            case thrusterType.RUDDER:
+                                //TODO
+                                break;
+                        }
                     });
-                    this.vesselThrusters[0].fillLinearGradientEndPoint({
-                        x: 0,
-                        y: 85,
-                    });
-                    if (response.data.thrust[0] < 0) {
-                        const thrust = Math.abs(response.data.thrust[0])/2 + 50;
-                        this.vesselThrusters[0].fillLinearGradientColorStops([
-                            0,
-                            colors.BACKGROUND,
-                            0.49,
-                            colors.BACKGROUND,
-                            0.5,
-                            '#1E5799',
-                            (thrust -1)/100,
-                            '#1E5799',
-                            (thrust)/100,
-                            colors.BACKGROUND
-                        ]);
-                    } else {
-                        const thrust = 50 - response.data.thrust[0]/2;
-                        this.vesselThrusters[0].fillLinearGradientColorStops([
-                            (thrust)/100,
-                            colors.BACKGROUND,
-                            (thrust)/100,
-                            '#1E5799',
-                            0.5,
-                            '#1E5799',
-                            0.51,
-                            colors.BACKGROUND,
-                            1,
-                            colors.BACKGROUND,
-                        ]);
-                    }
-
-                    this.vesselThrusters[1].fillLinearGradientStartPoint({
-                        x: 0,
-                        y: 0,
-                    });
-                    this.vesselThrusters[1].fillLinearGradientEndPoint({
-                        x: 0,
-                        y: 85,
-                    });
-                    if (response.data.thrust[1] < 0) {
-                        const thrust = Math.abs(response.data.thrust[1])/2 + 50;
-                        this.vesselThrusters[1].fillLinearGradientColorStops([
-                            0,
-                            colors.BACKGROUND,
-                            0.49,
-                            colors.BACKGROUND,
-                            0.5,
-                            '#1E5799',
-                            (thrust -1)/100,
-                            '#1E5799',
-                            (thrust)/100,
-                            colors.BACKGROUND
-                        ]);
-                    } else {
-                        const thrust = 50 - response.data.thrust[1]/2;
-                        this.vesselThrusters[1].fillLinearGradientColorStops([
-                            (thrust)/100,
-                            colors.BACKGROUND,
-                            (thrust)/100,
-                            '#1E5799',
-                            0.5,
-                            '#1E5799',
-                            0.51,
-                            colors.BACKGROUND,
-                            1,
-                            colors.BACKGROUND,
-                        ]);
-                    }
-
-                    this.vesselThrusters[2].setAttrs({
-                        rotation: response.data.angle[2],
-                    });
-                    this.vesselThrusters[2].children[1].fillLinearGradientStartPoint({
-                        x: 0,
-                        y: 0,
-                    });
-                    this.vesselThrusters[2].children[1].fillLinearGradientEndPoint({
-                        x: 0,
-                        y: 74,
-                    });
-                    this.vesselThrusters[2].children[1].fillLinearGradientColorStops([
-                        0,
-                        colors.BACKGROUND,
-                        (100 - response.data.thrust[2])/100,
-                        colors.BACKGROUND,
-                        (100 - response.data.thrust[2])/100,
-                        '#1E5799',
-                        1,
-                        '#1E5799'
-                    ]);
-                    this.vesselThrusters[3].setAttrs({
-                        rotation: response.data.angle[3],
-                    });
-                    this.vesselThrusters[3].children[1].fillLinearGradientStartPoint({
-                        x: 0,
-                        y: 0,
-                    });
-                    this.vesselThrusters[3].children[1].fillLinearGradientEndPoint({
-                        x: 0,
-                        y: 74,
-                    });
-                    this.vesselThrusters[3].children[1].fillLinearGradientColorStops([
-                        0,
-                        colors.BACKGROUND,
-                        (100 - response.data.thrust[3])/100,
-                        colors.BACKGROUND,
-                        (100 - response.data.thrust[3])/100,
-                        '#1E5799',
-                        1,
-                        '#1E5799'
-                    ]);
                     this.refs.mainLayerThrusters.draw();
                 });
         });
         manager.on('end', () => {
             console.log('Joystick released!')
         });
+    };
+
+    renderAzimuthThruster = (thrusterNumber, thrusterThrust, thrusterAngle) => {
+        this.vesselThrusters[thrusterNumber].setAttrs({
+            rotation: thrusterAngle,
+        });
+        this.vesselThrusters[thrusterNumber].children[1].fillLinearGradientStartPoint({
+            x: 0,
+            y: 0,
+        });
+        this.vesselThrusters[thrusterNumber].children[1].fillLinearGradientEndPoint({
+            x: 0,
+            y: 74,
+        });
+        this.vesselThrusters[thrusterNumber].children[1].fillLinearGradientColorStops([
+            0,
+            colors.BACKGROUND,
+            (100 - thrusterThrust)/100,
+            colors.BACKGROUND,
+            (100 - thrusterThrust)/100,
+            '#1E5799',
+            1,
+            '#1E5799'
+        ]);
+    };
+
+    renderTunnelThruster = (thrusterNumber, thrusterThrust) => {
+        this.vesselThrusters[thrusterNumber].fillLinearGradientStartPoint({
+            x: 0,
+            y: 0,
+        });
+        this.vesselThrusters[thrusterNumber].fillLinearGradientEndPoint({
+            x: 0,
+            y: 85,
+        });
+        if (thrusterThrust < 0) {
+            const thrust = Math.abs(thrusterThrust)/2 + 50;
+            this.vesselThrusters[thrusterNumber].fillLinearGradientColorStops([
+                0,
+                colors.BACKGROUND,
+                0.49,
+                colors.BACKGROUND,
+                0.5,
+                '#1E5799',
+                (thrust -1)/100,
+                '#1E5799',
+                (thrust)/100,
+                colors.BACKGROUND
+            ]);
+        } else {
+            const thrust = 50 - thrusterThrust/2;
+            this.vesselThrusters[thrusterNumber].fillLinearGradientColorStops([
+                (thrust)/100,
+                colors.BACKGROUND,
+                (thrust)/100,
+                '#1E5799',
+                0.5,
+                '#1E5799',
+                0.51,
+                colors.BACKGROUND,
+                1,
+                colors.BACKGROUND,
+            ]);
+        }
     };
 
     getActiveTab = () => {
