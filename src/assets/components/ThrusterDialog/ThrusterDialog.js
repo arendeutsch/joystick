@@ -13,6 +13,11 @@ import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import Grid from '@material-ui/core/Grid';
 import InputAdornment from '@material-ui/core/InputAdornment';
+import Switch from '@material-ui/core/Switch';
+import Collapse from '@material-ui/core/Collapse';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+
+import { thrusterType } from '../../../config';
 
 import axios from "axios/index";
 
@@ -48,6 +53,7 @@ class ThrusterDialog extends React.Component {
         type: 0,
         thrusterNumber: 0,
         position: {x: '', y: ''},
+        forbidden: {start: '', end: ''},
         onClose: null,
         onConfirm: null,
         onDelete: null,
@@ -59,6 +65,7 @@ class ThrusterDialog extends React.Component {
         types: null,
         effect: 0,
         effectError: true,
+        activeDeadZone: false,
     };
 
     regEx = new RegExp('^[\-0-9]+([,.][0-9]+)?$');
@@ -79,7 +86,6 @@ class ThrusterDialog extends React.Component {
         const { classes } = this.props;
         let items = null;
         if (this.state.types !== null) {
-            console.log(this.state.types);
             items = this.state.types.map((item) =>
                     <MenuItem
                         className={classes.item}
@@ -247,6 +253,26 @@ class ThrusterDialog extends React.Component {
         });
     };
 
+    handleChangeForbiddenStart = (event) => {
+        const angle = event.target.value;
+        this.setState({
+            forbidden: {
+                start: angle,
+                end: this.state.forbidden.end,
+            },
+        });
+    };
+
+    handleChangeForbiddenEnd = (event) => {
+        const angle = event.target.value;
+        this.setState({
+            forbidden: {
+                start: this.state.forbidden.start,
+                end: angle,
+            },
+        });
+    };
+
     handleClose = () => {
         if (this.props.onClose) {
             this.props.onClose();
@@ -259,13 +285,77 @@ class ThrusterDialog extends React.Component {
                 this.state.type,
                 this.state.thrusterNumber,
                 this.state.position,
-                this.state.effect);
+                this.state.effect,
+                this.state.forbidden);
         }
     };
 
     handleDelete = () => {
         if (this.props.onDelete) {
             this.props.onDelete(this.props.thrusterNode);
+        }
+    };
+
+    handleAddDeadZones = () => {
+        this.setState({
+            activeDeadZone: !this.state.activeDeadZone,
+        });
+    };
+
+    renderForbiddenZones = () => {
+        if (this.state.type === thrusterType.AZIMUTH) {
+            const { classes } = this.props;
+            return (
+                <Grid item={true} xs={12}>
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={this.state.activeDeadZone}
+                                onChange={this.handleAddDeadZones}
+                            />
+                        }
+                        label="Forbidden zones"
+                    />
+                    <div>
+                        <Collapse in={this.state.activeDeadZone}>
+                            <Grid container spacing={8}>
+                                <Grid item xs={6}>
+                                    <FormControl className={classes.formControl}>
+                                        <InputLabel htmlFor="forbiddenStart">From</InputLabel>
+                                        <Input
+                                            id="forbiddenStart"
+                                            placeholder="Start angle"
+                                            value={this.state.forbidden.start}
+                                            onChange={this.handleChangeForbiddenStart}
+                                            type="text"
+                                            endAdornment={
+                                                <InputAdornment position={"start"}>degrees</InputAdornment>
+                                            }
+                                        />
+                                    </FormControl>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <FormControl className={classes.formControl}>
+                                        <InputLabel htmlFor="forbiddenEnd">To</InputLabel>
+                                        <Input
+                                            id="forbiddenEnd"
+                                            placeholder="End angle"
+                                            value={this.state.forbidden.end}
+                                            onChange={this.handleChangeForbiddenEnd}
+                                            type="text"
+                                            endAdornment={
+                                                <InputAdornment position={"start"}>degrees</InputAdornment>
+                                            }
+                                        />
+                                    </FormControl>
+                                </Grid>
+                            </Grid>
+                        </Collapse>
+                    </div>
+                </Grid>
+            );
+        } else {
+             return null;
         }
     };
 
@@ -348,6 +438,7 @@ class ThrusterDialog extends React.Component {
                                 />
                             </FormControl>
                         </Grid>
+                        {this.renderForbiddenZones()}
                     </Grid>
                 </DialogContent>
                 <DialogActions>

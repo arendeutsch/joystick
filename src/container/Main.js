@@ -101,6 +101,8 @@ class Main extends React.Component {
     constructor(props) {
         super(props);
         this.layerControlRef = React.createRef();
+        this.anchorLayer = React.createRef();
+
 
         this.state = {
             activeTab: 0,
@@ -138,7 +140,7 @@ class Main extends React.Component {
         }
 
         if (this.state.activeTab === tabIds.BUILD) {
-            const anchorLayer = this.refs.anchorLayer;
+            const anchorLayer = this.anchorLayer.current;
             const elementsLayer = this.refs.elementsLayer;
             const lineLayer = this.refs.lineLayer;
             if (this.state.activeStep ===1) {
@@ -197,7 +199,7 @@ class Main extends React.Component {
             //         ),
             //     });
             // });
-    }
+    };
 
     handleWindServerError = (err) => {
         console.log('handle wind server error...');
@@ -223,7 +225,21 @@ class Main extends React.Component {
         });
     };
 
-    handleConfirmThrusterDialog = (node, type, number, position, effect) => {
+    handleConfirmThrusterDialog = (node, type, number, position, effect, forbiddenZone) => {
+        if (forbiddenZone.start !== '' && forbiddenZone.end !== '' && node.nodeType === 'Group') {
+            const azimuth = node.children[0];
+            const arc = new Konva.Arc({
+                innerRadius: azimuth.getAttr('innerRadius'),
+                outerRadius: azimuth.getAttr('outerRadius'),
+                angle: (forbiddenZone.end - forbiddenZone.start),
+                rotation: -90 + parseInt(forbiddenZone.start, 10),
+                fill: 'red',
+                stroke: azimuth.getAttr('stroke'),
+                strokeWidth: azimuth.getAttr('strokeWidth')
+            });
+            node.add(arc);
+            this.refs.lineLayer.draw();
+        }
         axios.post('http://localhost:8080/vessels/' + this.state.vesselId + '/thrusters', {
             number: number,
             type: type,
@@ -369,7 +385,7 @@ class Main extends React.Component {
             draggable: true
         });
 
-        const anchorLayer = this.refs.anchorLayer;
+        const anchorLayer = this.anchorLayer.current;
 
         // add hover styling
         anchor.on('mouseover', function() {
@@ -469,7 +485,7 @@ class Main extends React.Component {
     };
 
     handleAnchorDrag = () => {
-        const anchorLayer = this.refs.anchorLayer;
+        const anchorLayer = this.anchorLayer.current;
         anchorLayer.on('beforeDraw', () => {
             this.drawCurves();
             this.updateDottedLines();
@@ -524,11 +540,11 @@ class Main extends React.Component {
                 return (
                     <Stage
                         width={window.innerWidth}
-                        height={window.innerHeight - 250}
+                        height={window.innerHeight - 120}
                     >
                         <Layer ref="curveLayer">
                         </Layer>
-                        <Layer ref="anchorLayer"
+                        <Layer ref={this.anchorLayer}
                                onDragStart={this.handleAnchorDrag}
                         >
                         </Layer>
@@ -809,9 +825,14 @@ class Main extends React.Component {
         if (clone.nodeType === 'Group') {
             for (let i= 0; i < clone.children.length; i++) {
                 clone.children[i].dash([0,0]);
+                clone.children[i].shadowOffsetX(0);
+                clone.children[i].shadowOffsetY(0);
             }
+            clone.children[clone.children.length-1].fill('black');
         } else {
             clone.dash([0,0]);
+            clone.shadowOffsetX(0);
+            clone.shadowOffsetY(0);
         }
     };
 
@@ -885,23 +906,14 @@ class Main extends React.Component {
             context.setAttr('lineWidth', 4);
             context.stroke();
 
-            // const boat = new Konva.Line({
-            //     points: this.vesselArrayPoints,
-            //     fill: '#bab9a5',
-            //     stroke: 'black',
-            //     strokeWidth: 3,
-            //     closed : true,
-            //     // bezier: true,
-            //     tension : 0.3
-            // });
-
-            // mainLayer.add(boat);
-
             //draw thrusters on vessel
             data.forEach((thruster) => {
                 const node = Konva.Node.create(JSON.parse(thruster.stageNode));
                 node.setAttrs({
                     draggable: false,
+                });
+                node.on('dblclick', () => {
+                    this.handleThrusterMenu(node);
                 });
                 this.vesselThrusters.push(node);
                 mainLayerThrusters.add(node);
@@ -909,7 +921,16 @@ class Main extends React.Component {
             mainLayerThrusters.draw();
             this.drawn = true;
         }
+    };
 
+    handleThrusterMenu = (node) => {
+        console.log(node);
+
+        // node.setAttrs({
+        //     stroke: 'green',
+        //     strokeWidth: 2,
+        // });
+        // this.refs.mainLayerThrusters.draw();
     };
 
     handleJoystickCommand = (manager) => {
