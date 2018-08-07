@@ -103,7 +103,6 @@ class Main extends React.Component {
         this.layerControlRef = React.createRef();
         this.anchorLayer = React.createRef();
 
-
         this.state = {
             activeTab: 0,
             tabTitle: '',
@@ -123,6 +122,10 @@ class Main extends React.Component {
     vesselArrayPoints = [];
     vesselThrusters = [];
     drawn = false;
+
+    componentDidMount() {
+        document.addEventListener('contextmenu', this._handleContextMenu)
+    }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
         this.drawn = false;
@@ -168,6 +171,11 @@ class Main extends React.Component {
             }
         }
     }
+
+    _handleContextMenu = (event) => {
+        event.preventDefault();
+        return false;
+    };
 
     saveVesselPoints = (points) => {
         this.vesselArrayPoints = [];
@@ -235,9 +243,14 @@ class Main extends React.Component {
                 rotation: -90 + parseInt(forbiddenZone.start, 10),
                 fill: 'red',
                 stroke: azimuth.getAttr('stroke'),
-                strokeWidth: azimuth.getAttr('strokeWidth')
+                strokeWidth: azimuth.getAttr('strokeWidth'),
+                x: node.getAttr('x'),
+                y: node.getAttr('y'),
+                belongsTo: node,
             });
-            node.add(arc);
+            // node.add(arc);
+            this.refs.lineLayer.add(arc);
+            arc.moveDown();
             this.refs.lineLayer.draw();
         }
         axios.post('http://localhost:8080/vessels/' + this.state.vesselId + '/thrusters', {
@@ -782,7 +795,6 @@ class Main extends React.Component {
         });
         clone.on('mousedown', (event) => {
             if (event.evt.which === 3) {
-                event.evt.preventDefault();
                 this.handleThrusterDialog(clone);
             }
         });
@@ -817,8 +829,8 @@ class Main extends React.Component {
             easing: Konva.Easings.ElasticEaseOut,
             scaleX: clone.getAttr('startScale'),
             scaleY: clone.getAttr('startScale'),
-            shadowOffsetX: 5,
-            shadowOffsetY: 5,
+            shadowOffsetX: 2,
+            shadowOffsetY: 2,
         });
         this.tween.play();
         // removing dash stroke from clone
@@ -911,7 +923,22 @@ class Main extends React.Component {
                 const node = Konva.Node.create(JSON.parse(thruster.stageNode));
                 node.setAttrs({
                     draggable: false,
+                    joyMode: true,
+                    stroke: 'green',
+                    strokeWidth: 1.5,
                 });
+                if (node.children) {
+                    node.setAttrs({
+                        joyMode: true,
+                    });
+                    for (let i = 0; i < node.children.length; i++) {
+                        node.children[i].setAttrs({
+                            draggable: false,
+                            stroke: 'green',
+                            strokeWidth: 1.5,
+                        });
+                    }
+                }
                 node.on('dblclick', () => {
                     this.handleThrusterMenu(node);
                 });
@@ -926,11 +953,45 @@ class Main extends React.Component {
     handleThrusterMenu = (node) => {
         console.log(node);
 
-        // node.setAttrs({
-        //     stroke: 'green',
-        //     strokeWidth: 2,
-        // });
-        // this.refs.mainLayerThrusters.draw();
+        if (node.getAttr('joyMode')) {
+            if (node.children) {
+                node.setAttrs({
+                    joyMode: false,
+                });
+                for (let i = 0; i < node.children.length; i++) {
+                    node.children[i].setAttrs({
+                        stroke: 'black',
+                        strokeWidth: 1.2,
+                    });
+                }
+            } else {
+                node.setAttrs({
+                    stroke: 'black',
+                    strokeWidth: 1.2,
+                    joyMode: false,
+                });
+            }
+        } else {
+            if (node.children) {
+                node.setAttrs({
+                    joyMode: true,
+                });
+                for (let i = 0; i < node.children.length; i++) {
+                    node.children[i].setAttrs({
+                        stroke: 'green',
+                        strokeWidth: 1.5,
+                    });
+                }
+            } else {
+                node.setAttrs({
+                    stroke: 'green',
+                    strokeWidth: 1.5,
+                    joyMode: true,
+                });
+            }
+        }
+
+        this.refs.mainLayerThrusters.draw();
     };
 
     handleJoystickCommand = (manager) => {
