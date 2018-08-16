@@ -10,6 +10,9 @@ import Select from '@material-ui/core/Select';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
 import Button from '@material-ui/core/Button';
+import MomenUtils from 'material-ui-pickers/utils/moment-utils';
+import MuiPickersUtilsProvider from 'material-ui-pickers/utils/MuiPickersUtilsProvider';
+import { DatePicker } from 'material-ui-pickers';
 import axios from "axios/index";
 
 
@@ -51,7 +54,7 @@ class VesselForm extends React.Component {
         width: '',
         lengthError: true,
         widthError: true,
-        buildYear: '',
+        buildYear: new Date(),
         types: null,
     };
 
@@ -120,9 +123,9 @@ class VesselForm extends React.Component {
         });
     };
 
-    handleChangeDate = (event) => {
+    handleChangeDate = (date) => {
         this.setState({
-            buildYear: event.target.value,
+            buildYear: date,
         });
     };
 
@@ -135,98 +138,98 @@ class VesselForm extends React.Component {
     render () {
         const { classes } = this.props;
         return (
-            <Paper
-                className={classes.paper}
-                elevation={2}
-            >
-                <Grid container spacing={8}>
-                    <Grid item xs={6}>
-                        <TextField
-                            className={classes.textField}
-                            id="name"
-                            label="Vessel Name"
-                            value={this.state.vesselName}
-                            onChange={this.handleNameChange}
-                            margin="normal"
-                        />
+            <MuiPickersUtilsProvider utils={MomenUtils}>
+                <Paper
+                    className={classes.paper}
+                    elevation={2}
+                >
+                    <Grid container spacing={8}>
+                        <Grid item xs={6}>
+                            <TextField
+                                className={classes.textField}
+                                id="name"
+                                label="Vessel Name"
+                                value={this.state.vesselName}
+                                onChange={this.handleNameChange}
+                                margin="normal"
+                            />
+                        </Grid>
+                        <Grid item xs={6}>
+                            <TextField
+                                className={classes.textField}
+                                id="hull"
+                                label="Vessel Hull"
+                                value={this.state.vesselHull}
+                                onChange={this.handleHullChange}
+                                margin="normal"
+                            />
+                        </Grid>
                     </Grid>
-                    <Grid item xs={6}>
-                        <TextField
-                            className={classes.textField}
-                            id="hull"
-                            label="Vessel Hull"
-                            value={this.state.vesselHull}
-                            onChange={this.handleHullChange}
-                            margin="normal"
-                        />
+                    <Grid container spacing={8}>
+                        <Grid item xs={6}>
+                            <FormControl className={classes.formControl}>
+                                <Select
+                                    value={this.state.vesselType}
+                                    onChange={this.handleChangeType}
+                                    input={<Input id="vessel-type" />}
+                                >
+                                    <MenuItem className={classes.item} value={0}><em>Type</em></MenuItem>
+                                    {this.getTypes()}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        <Grid item xs={6}>
+                            <DatePicker
+                                id="date"
+                                label="Build Date"
+                                className={classes.textField}
+                                value={this.state.buildYear}
+                                onChange={this.handleChangeDate}
+                                animateYearScrolling={true}
+                            />
+                        </Grid>
                     </Grid>
-                </Grid>
-                <Grid container spacing={8}>
-                    <Grid item xs={6}>
-                        <FormControl className={classes.formControl}>
-                            <Select
-                                value={this.state.vesselType}
-                                onChange={this.handleChangeType}
-                                input={<Input id="vessel-type" />}
+                    <Grid container spacing={8}>
+                        <Grid item xs={6}>
+                            <FormControl className={classes.formControl} error={this.state.lengthError} required={true}>
+                                <InputLabel htmlFor="length">Length</InputLabel>
+                                <Input
+                                    id="length"
+                                    placeholder="Vessel length"
+                                    value={this.state.length}
+                                    onChange={this.handleChangeLength}
+                                    type="text"
+                                />
+                            </FormControl>
+                        </Grid>
+                        <Grid item xs={6}>
+                            <FormControl className={classes.formControl} error={this.state.widthError} required={true}>
+                                <InputLabel htmlFor="width">Width</InputLabel>
+                                <Input
+                                    id="length"
+                                    placeholder="Vessel width"
+                                    value={this.state.width}
+                                    onChange={this.handleChangeWidth}
+                                    type="text"
+                                />
+                            </FormControl>
+                        </Grid>
+                    </Grid>
+                    <Grid container spacing={32}>
+                        <Grid item xs={12}>
+                            <Button
+                                onClick={this.handleSave}
+                                color="primary"
+                                variant='contained'
+                                className={classes.button}
+                                disabled={this.state.disableConfirm}
                             >
-                                <MenuItem className={classes.item} value={0}><em>Type</em></MenuItem>
-                                {this.getTypes()}
-                            </Select>
-                        </FormControl>
+                                Save Information
+                            </Button>
+                        </Grid>
                     </Grid>
-                    <Grid item xs={6}>
-                        <TextField
-                            id="date"
-                            label="Build Date"
-                            type="date"
-                            className={classes.textField}
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
-                            onChange={this.handleChangeDate}
-                        />
-                    </Grid>
-                </Grid>
-                <Grid container spacing={8}>
-                    <Grid item xs={6}>
-                        <FormControl className={classes.formControl} error={this.state.lengthError} required={true}>
-                            <InputLabel htmlFor="length">Length</InputLabel>
-                            <Input
-                                id="length"
-                                placeholder="Vessel length"
-                                value={this.state.length}
-                                onChange={this.handleChangeLength}
-                                type="text"
-                            />
-                        </FormControl>
-                    </Grid>
-                    <Grid item xs={6}>
-                        <FormControl className={classes.formControl} error={this.state.widthError} required={true}>
-                            <InputLabel htmlFor="width">Width</InputLabel>
-                            <Input
-                                id="length"
-                                placeholder="Vessel width"
-                                value={this.state.width}
-                                onChange={this.handleChangeWidth}
-                                type="text"
-                            />
-                        </FormControl>
-                    </Grid>
-                </Grid>
-                <Grid container spacing={32}>
-                    <Grid item xs={12}>
-                        <Button
-                            onClick={this.handleSave}
-                            color="primary"
-                            variant='contained'
-                            className={classes.button}
-                            disabled={this.state.disableConfirm}
-                        >
-                            Save Information
-                        </Button>
-                    </Grid>
-                </Grid>
-            </Paper>
+                </Paper>
+            </MuiPickersUtilsProvider>
         );
     }
 }

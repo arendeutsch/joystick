@@ -233,24 +233,26 @@ class Main extends React.Component {
         });
     };
 
-    handleConfirmThrusterDialog = (node, type, number, position, effect, forbiddenZone) => {
-        if (forbiddenZone.start !== '' && forbiddenZone.end !== '' && node.nodeType === 'Group') {
+    handleConfirmThrusterDialog = (node, type, number, position, effect, forbiddenZone, activeForbiddenZone) => {
+        if (activeForbiddenZone && forbiddenZone.start !== '' && forbiddenZone.end !== '' && node.nodeType === 'Group') {
             const azimuth = node.children[0];
             const arc = new Konva.Arc({
                 innerRadius: azimuth.getAttr('innerRadius'),
                 outerRadius: azimuth.getAttr('outerRadius'),
                 angle: (forbiddenZone.end - forbiddenZone.start),
                 rotation: -90 + parseInt(forbiddenZone.start, 10),
-                fill: 'red',
+                fill: '#A71212',
                 stroke: azimuth.getAttr('stroke'),
                 strokeWidth: azimuth.getAttr('strokeWidth'),
-                x: node.getAttr('x'),
-                y: node.getAttr('y'),
-                belongsTo: node,
+                // x: node.getAttr('x'),
+                // y: node.getAttr('y'),
+                // scaleX: node.getAttr('scaleX'),
+                // scaleY: node.getAttr('scaleY'),
+                // belongsTo: node,
             });
-            // node.add(arc);
-            this.refs.lineLayer.add(arc);
-            arc.moveDown();
+            node.add(arc);
+            // this.refs.lineLayer.add(arc);
+            // arc.moveDown();
             this.refs.lineLayer.draw();
         }
         axios.post('http://localhost:8080/vessels/' + this.state.vesselId + '/thrusters', {
@@ -259,6 +261,9 @@ class Main extends React.Component {
             x_cg: position.x,
             y_cg: position.y,
             effect: effect,
+            forbiddenZonesActive: activeForbiddenZone,
+            forbiddenZoneStart: forbiddenZone.start,
+            forbiddenZoneEnd: forbiddenZone.end,
             stageNode: JSON.stringify(node.toJSON()),
         })
             .then((response) => {

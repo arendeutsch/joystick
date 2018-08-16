@@ -286,7 +286,8 @@ class ThrusterDialog extends React.Component {
                 this.state.thrusterNumber,
                 this.state.position,
                 this.state.effect,
-                this.state.forbidden);
+                this.state.forbidden,
+                this.state.activeDeadZone);
         }
     };
 
