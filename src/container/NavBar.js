@@ -23,7 +23,7 @@ import PrinterIcon from '@material-ui/icons/Print';
 import Collapse from '@material-ui/core/Collapse';
 import BuildIcon from '@material-ui/icons/Build';
 
-const drawerWidth = 240;
+const drawerWidth = 225;
 
 const styles = theme => ({
     drawerPaper: {

@@ -186,6 +186,7 @@ class VesselForm extends React.Component {
                                 value={this.state.buildYear}
                                 onChange={this.handleChangeDate}
                                 animateYearScrolling={true}
+                                format="MMMM Do YYYY"
                             />
                         </Grid>
                     </Grid>

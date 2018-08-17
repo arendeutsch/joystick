@@ -15,6 +15,8 @@ import { Map, TileLayer, Marker, Popup, LayersControl, FeatureGroup } from 'reac
 import { EditControl } from 'react-leaflet-draw';
 
 import WindJSLeaflet from 'wind-js-leaflet';
+import L from 'leaflet';
+import tracksymbol from 'leaflet-tracksymbol';
 
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
@@ -168,6 +170,25 @@ class Main extends React.Component {
             const layerControl = this.layerControlRef.current;
             if (map !== null && layerControl !== null) {
                 this.handleShowWind(map, layerControl);
+                const latlng = L.latLng(67.303194, 15.18611);
+                const speed = 10.0; // In m/s
+                const course = 45.0 * Math.PI / 180.0; // Radians from north
+                const heading = 45.0 * Math.PI / 180.0; // Radians from north
+
+                const trackMarker = L.trackSymbol(latlng, {
+                    trackId: 1,
+                    fill: true,
+                    fillColor: '#ffe649',
+                    fillOpacity: 1.0,
+                    stroke: true,
+                    color: '#000000',
+                    opacity: 1.0,
+                    weight: 1.0,
+                    speed: speed,
+                    course: course,
+                    heading: heading
+                });
+                trackMarker.addTo(map);
             }
         }
     }
@@ -929,7 +950,7 @@ class Main extends React.Component {
                 node.setAttrs({
                     draggable: false,
                     joyMode: true,
-                    stroke: 'green',
+                    // stroke: 'green',
                     strokeWidth: 1.5,
                 });
                 if (node.children) {
@@ -939,9 +960,20 @@ class Main extends React.Component {
                     for (let i = 0; i < node.children.length; i++) {
                         node.children[i].setAttrs({
                             draggable: false,
-                            stroke: 'green',
+                            // stroke: 'green',
                             strokeWidth: 1.5,
                         });
+                        if (node.children[i].className === 'Arc') {
+                            const arc = node.children[i];
+                            arc.remove();
+                            arc.setAttrs({
+                                x: node.getAttr('x'),
+                                y: node.getAttr('y'),
+                                scaleX: node.getAttr('scaleX'),
+                                scaleY: node.getAttr('scaleY'),
+                            });
+                            mainLayerThrusters.add(arc);
+                        }
                     }
                 }
                 node.on('dblclick', () => {
@@ -1119,6 +1151,7 @@ class Main extends React.Component {
             }
             case tabIds.MAPS: {
                 const position = [67.296517, 15.164172];
+
                 const {BaseLayer, Overlay} = LayersControl;
                 return (
                     <Map ref="leafletMap" className={classes.map} center={position} zoom={10}>
@@ -1147,7 +1180,7 @@ class Main extends React.Component {
                                 <Marker position={position}>
                                     <Popup>
                                         <span>
-                                          Ægir Dynamics <br/> HQ.
+                                          Noatun Dynamics <br/> HQ.
                                         </span>
                                     </Popup>
                                 </Marker>
